@@ -61,7 +61,6 @@ class MineGrid:
 
                     self.mineGrid[i][j].surroundingMines = mines
 
-
 if __name__ == '__main__':
     grid = MineGrid(10, .05)
     print('Testing ... ')
