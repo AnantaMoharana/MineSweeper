@@ -15,7 +15,7 @@ class Cell:
 
 
     def setSurroundingMines(self, m):
-        self.surroundingMines = m
+        self.surroundingMines =  m
 
 
 
