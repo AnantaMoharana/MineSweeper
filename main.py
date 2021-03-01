@@ -8,7 +8,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 class Cell:
-    # WHY IS isMine SET TO A BOOL ARRAY OF SIZE 1? ISSUE WITH RANDOM.CHOICES?
     def __init__(self, isMine, surroundingMines):
         self.isMine = isMine
         self.surroundingMines = surroundingMines
