@@ -1,11 +1,10 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import colors
+from matplotlib import cm
 import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
 
 
 class Cell:
@@ -90,16 +89,21 @@ class MineGrid:
 
         # Add colors to grid
         _, ax = plt.subplots()
-        ax.imshow(tmp, cmap=colors.ListedColormap(['black', 'blue', 'purple', 'pink', 'orange', 'red']))
+        ax.imshow(tmp, cmap=cm.get_cmap('Reds', 10))
 
         # Add numbers to grid
         for i in range(self.dimension):
             for j in range(self.dimension):
-                ax.text(j, i, tmp[i][j], ha="center", va="center", color="white")  # ,  bbox=dict(facecolor='blue'))
+                ax.text(j, i, tmp[i][j], ha="center", va="center", color="black")  # ,  bbox=dict(facecolor='blue'))
 
         plt.axis('off')
         plt.show()
 
+
+class Agent:
+    def __init__(self, dimension, grid):
+        # Agent is not allowed to peek into the grid
+        print()
 
 
 
@@ -110,5 +114,8 @@ class MineGrid:
 
 
 if __name__ == '__main__':
-    grid = MineGrid(10, .05)
+    d = 15
+    p = .07
+    AI = Agent(d, MineGrid(d, p))
+
     print('Testing ... ')
