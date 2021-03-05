@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import warnings
 
+# To suppress display warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
