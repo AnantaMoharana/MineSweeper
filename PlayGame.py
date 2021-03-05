@@ -6,9 +6,11 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from main import Agent_Board
-from main import Cell
+from main import AgentBoard
 from main import MineGrid
+
+
+
 
 
 
@@ -150,7 +152,8 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
 
 
 
-
+def improvedAgent(Game, Agent):
+    return
 
 
 
@@ -167,8 +170,9 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
 if __name__ == '__main__':
 
 
-    Game=MineGrid(10,3)
-    Agent=Agent_Board(10)
-    Basic_Agent_GamePlay(Game,Agent)
+    answerSheet = MineGrid(10, 3)
+    Agent = AgentBoard(10)
+    #Basic_Agent_GamePlay(answerSheet,Agent)
 
-    
+    improvedAgent(answerSheet, Agent)
+
