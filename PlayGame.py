@@ -3,15 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import warnings
-
-warnings.simplefilter(action='ignore', category=FutureWarning)
-
 from main import AgentBoard
 from main import MineGrid
 
 
-
-
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def Basic_Agent_GamePlay(Game, Agent):
@@ -63,6 +59,48 @@ def Basic_Agent_GamePlay(Game, Agent):
                         visitedCells.append([x,y])
 
 
+def Improved_Agent_GamePlay(Game, Agent):
+    dimension = Game.dimension
+
+    # Create a set of all the covered spaces
+    coveredSet = []
+    num = 0
+    for i in range(0, dimension):
+        for j in range(0, dimension):
+            coveredSet.append((i, j))
+
+    # Pull off a random element to get started
+    xfirst = random.choices(coveredSet)
+    xfirst = xfirst[0]
+    coveredSet.remove(xfirst)
+
+    print(xfirst)
+
+    x = xfirst[0]
+    y = xfirst[1]
+
+    Agent.board[x][y] = Game.mineGrid[x][y]
+
+    # Now that the first piece has been uncovered, what can we infer?
+    covered = count_surrounding_spaces(x, y, Agent)
+    revealedSafe = get_revealed_safe_neighbors(x, y, Agent)
+    clue = Agent.board[x][y]
+
+
+    if (clue-(covered+revealedSafe)) == 0:
+        print()
+        # all are mines, update agent's board, KB
+    elif clue == 0:
+        print()
+        # all are safe, update agent's board, KB
+    else:
+        print()
+        # we do not know exactly, make larger inferences
+
+
+
+
+
 def get_revealed_safe_neighbors(i,j,Agent):
     safely_revealed=0
     if i - 1 >= 0:
@@ -91,6 +129,7 @@ def get_revealed_safe_neighbors(i,j,Agent):
             safely_revealed=safely_revealed+1   
     return safely_revealed  
 
+
 def count_surrounding_spaces(i,j,Agent):
     neighbors=0
     if i - 1 >= 0:
@@ -110,8 +149,6 @@ def count_surrounding_spaces(i,j,Agent):
     if i+1<=Agent.dimension-1 and j-1>=0:
         neighbors=neighbors+1
     return neighbors
-
-
 
 
 def get_hidden_square(i,j,Agent,hiddenCoordinates):
@@ -152,10 +189,6 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
 
 
 
-def improvedAgent(Game, Agent):
-    return
-
-
 
 
 
@@ -174,5 +207,8 @@ if __name__ == '__main__':
     Agent = AgentBoard(10)
     #Basic_Agent_GamePlay(answerSheet,Agent)
 
-    improvedAgent(answerSheet, Agent)
+    Improved_Agent_GamePlay(answerSheet, Agent)
+
+    answerSheet.display()
+    Agent.display()
 
