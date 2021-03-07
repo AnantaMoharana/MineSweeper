@@ -76,7 +76,10 @@ class MineGrid:
         # Add numbers to grid
         for i in range(self.dimension):
             for j in range(self.dimension):
-                ax.text(j, i, self.mineGrid[i][j], ha="center", va="center", color="black")
+                if self.mineGrid[i][j] == -1:
+                    ax.text(j, i, 'X', ha="center", va="center", color="black")
+                else:
+                    ax.text(j, i, self.mineGrid[i][j], ha="center", va="center", color="black")
 
         plt.axis('off')
         plt.title('Environment')
@@ -104,9 +107,13 @@ class AgentBoard:
         # Add numbers to grid
         for i in range(self.dimension):
             for j in range(self.dimension):
-                ax.text(j, i, self.board[i][j], ha="center", va="center", color="black")
+                if self.board[i][j] == -1:
+                    ax.text(j, i, 'X', ha="center", va="center", color="black")
+                elif self.board[i][j] == -2:
+                    ax.text(j, i, '-', ha="center", va="center", color="black")
+                else:
+                    ax.text(j, i, self.board[i][j], ha="center", va="center", color="black")
 
         plt.axis('off')
         plt.title('Agent')
         plt.show()
-
