@@ -130,12 +130,11 @@ def Improved_Agent_GamePlay(Game, Agent):
 
             safe = get_revealed_safe_neighbors(x, y, Agent)
             hiddenCords = []
-            hidden = get_hidden_square(i, j, Agent, hiddenCords)
+            hidden = get_hidden_square(x, y, Agent, hiddenCords)
             if Agent.board[x][y] > 0:
 
                 clue = Agent.board[x][y]
                 print(clue, hidden)
-                print(len(hiddenCords))
                 if clue == hidden: # All hidden are mines
                     markMines(Agent, hiddenCords)
 
@@ -156,7 +155,7 @@ def flip(Game, Agent, x, y):
 
 def markMines(Agent, hidden):
     for x in hidden:
-        Agent[x[0]][x[1]] = -1
+        Agent.board[x[0]][x[1]] = -1
 
 
 def pickRandomSquare(Game, Agent, coveredSet):
@@ -260,29 +259,3 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
             hidden=hidden+1
             hiddenCoordinates.append([i+1,j-1])     
     return hidden   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if __name__ == '__main__':
-
-
-    answerSheet = MineGrid(9, 9)
-    agent = AgentBoard(9)
-    #Basic_Agent_GamePlay(answerSheet,agent)
-
-    Improved_Agent_GamePlay(answerSheet, agent)
-
-    answerSheet.display()
-    #agent.display()
-
