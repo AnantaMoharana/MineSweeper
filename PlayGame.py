@@ -278,11 +278,11 @@ if __name__ == '__main__':
 
 
     answerSheet = MineGrid(9, 9)
-    Agent = AgentBoard(9)
-    #Basic_Agent_GamePlay(answerSheet,Agent)
+    agent = AgentBoard(9)
+    #Basic_Agent_GamePlay(answerSheet,agent)
 
-    Improved_Agent_GamePlay(answerSheet, Agent)
+    Improved_Agent_GamePlay(answerSheet, agent)
 
     answerSheet.display()
-    Agent.display()
+    #agent.display()
 
