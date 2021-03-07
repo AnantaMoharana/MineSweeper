@@ -259,3 +259,17 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
             hidden=hidden+1
             hiddenCoordinates.append([i+1,j-1])     
     return hidden   
+
+
+
+if __name__ == '__main__':
+
+
+    answerSheet = MineGrid(9, 9)
+    agent = AgentBoard(9)
+    #Basic_Agent_GamePlay(answerSheet,agent)
+
+    Improved_Agent_GamePlay(answerSheet, agent)
+
+    answerSheet.display()
+    #agent.display()
