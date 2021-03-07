@@ -64,12 +64,102 @@ def Improved_Agent_GamePlay(Game, Agent):
 
     # Create a set of all the covered spaces
     coveredSet = []
-    num = 0
     for i in range(0, dimension):
         for j in range(0, dimension):
             coveredSet.append((i, j))
 
     # Pull off a random element to get started
+    i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
+
+    safe = []
+    visited = []
+
+
+    if Agent.board[i][j] == 0:
+        safe.append((i, j))
+
+
+
+    while len(safe) > 0:
+        ans = safe.pop(0)
+        i = ans[0]
+        j = ans[1]
+        visited.append((i, j))
+
+        # flip 8 surrounding squares, which must be safe
+        if i - 1 >= 0 and (i-1, j) not in visited:
+            flip(Game, Agent, i - 1, j)
+            if Agent.board[i-1][j] == 0:
+                safe.append((i-1, j))
+        if j - 1 >= 0 and (i, j-1) not in visited:
+            flip(Game, Agent, i, j - 1)
+            if Agent.board[i][j-1] == 0:
+                safe.append((i, j-1))
+        if i + 1 < dimension and (i+1, j) not in visited:
+            flip(Game, Agent, i + 1, j)
+            if Agent.board[i+1][j] == 0:
+                safe.append((i+1, j))
+        if j + 1 < Agent.dimension and (i, j+1) not in visited:
+            flip(Game, Agent, i, j + 1)
+            if Agent.board[i][j+1] == 0:
+                safe.append((i, j+1))
+        if i - 1 >= 0 and j - 1 >= 0 and (i-1, j-1) not in visited:
+            flip(Game, Agent, i - 1, j - 1)
+            if Agent.board[i-1][j-1] == 0:
+                safe.append((i-1, j-1))
+        if i - 1 >= 0 and j + 1 <= Agent.dimension - 1 and (i-1, j+1) not in visited:
+            flip(Game, Agent, i - 1, j + 1)
+            if Agent.board[i-1][j+1] == 0:
+                safe.append((i-1, j+1))
+        if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1 and (i+1, j+1) not in visited:
+            flip(Game, Agent, i + 1, j + 1)
+            if Agent.board[i+1][j+1] == 0:
+                safe.append((i+1, j+1))
+        if i + 1 <= Agent.dimension - 1 and j - 1 >= 0 and (i+1, j-1) not in visited:
+            flip(Game, Agent, i + 1, j - 1)
+            if Agent.board[i+1][j-1] == 0:
+                safe.append((i+1, j-1))
+
+    Agent.display()
+
+    # Do a quick search to check for easily identified mines
+    # NOTE, THIS WILL ONLY EXECUTE WHEN THE FIRST VALUE RANDOMLY SELECTED IS A ZERO !!
+    # MAY NEED TO RUN SEVERAL TIMES TO SEE
+    for x in range(0, dimension):
+        for y in range(0, dimension):
+
+            safe = get_revealed_safe_neighbors(x, y, Agent)
+            hiddenCords = []
+            hidden = get_hidden_square(i, j, Agent, hiddenCords)
+            if Agent.board[x][y] > 0:
+
+                clue = Agent.board[x][y]
+                print(clue, hidden)
+                print(len(hiddenCords))
+                if clue == hidden: # All hidden are mines
+                    markMines(Agent, hiddenCords)
+
+    Agent.display()
+
+
+
+
+
+
+
+
+
+
+def flip(Game, Agent, x, y):
+    Agent.board[x][y] = Game.mineGrid[x][y]
+
+
+def markMines(Agent, hidden):
+    for x in hidden:
+        Agent[x[0]][x[1]] = -1
+
+
+def pickRandomSquare(Game, Agent, coveredSet):
     xfirst = random.choices(coveredSet)
     xfirst = xfirst[0]
     coveredSet.remove(xfirst)
@@ -79,25 +169,9 @@ def Improved_Agent_GamePlay(Game, Agent):
     x = xfirst[0]
     y = xfirst[1]
 
-    Agent.board[x][y] = Game.mineGrid[x][y]
+    flip(Game, Agent, x, y)
 
-    # Now that the first piece has been uncovered, what can we infer?
-    covered = count_surrounding_spaces(x, y, Agent)
-    revealedSafe = get_revealed_safe_neighbors(x, y, Agent)
-    clue = Agent.board[x][y]
-
-
-    if (clue-(covered+revealedSafe)) == 0:
-        print()
-        # all are mines, update agent's board, KB
-    elif clue == 0:
-        print()
-        # all are safe, update agent's board, KB
-    else:
-        print()
-        # we do not know exactly, make larger inferences
-
-
+    return x, y, coveredSet
 
 
 
@@ -203,8 +277,8 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
 if __name__ == '__main__':
 
 
-    answerSheet = MineGrid(10, 3)
-    Agent = AgentBoard(10)
+    answerSheet = MineGrid(9, 9)
+    Agent = AgentBoard(9)
     #Basic_Agent_GamePlay(answerSheet,Agent)
 
     Improved_Agent_GamePlay(answerSheet, Agent)
