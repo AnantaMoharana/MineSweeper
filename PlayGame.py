@@ -6,47 +6,49 @@ import warnings
 from main import AgentBoard
 from main import MineGrid
 
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+# GAME BOARD: -1 = MINE, 0-9 = CLUE
+# AGENT BOARD: -3 = FLAGGED MINE, -2 = COVERED, -1 = BLOWN UP MINE, 0-9 = CLUE
 
 
 def Basic_Agent_GamePlay(Game, Agent):
-    gamecells=[]
-    bombCells=[]
-    num=Game.numberOfMines
-    revealed_mines=0
+    gamecells = []
+    bombCells = []
+    num = Game.numberOfMines
+    revealed_mines = 0
 
     for x in range(Game.dimension):
         for y in range(Game.dimension):
-            gamecells.append((x,y))
+            gamecells.append((x, y))
 
-    while(len(gamecells)!=0):
+    while (len(gamecells) != 0):
 
         x, y, gamecells = pickRandomSquare(Game, Agent, gamecells)
-        if  Agent.board[x][y]==-1:
-            num=num-1
-            bombCells.append([x,y])
-            revealed_mines=revealed_mines+1
+        if Agent.board[x][y] == -1:
+            num = num - 1
+            bombCells.append([x, y])
+            revealed_mines = revealed_mines + 1
             continue
         else:
-             
-            hiddenCoordinates=[]
-            hidden=get_hidden_square(x,y,Agent,hiddenCoordinates)
-            safe_revealed_neighbors=get_revealed_safe_neighbors(x,y,Agent)
-            #mines = get_surrounding_mines(x, y, Agent)
-            if Agent.board[x][y]-revealed_mines==hidden:
-                    #every neighbor is a mine
-                    for coordinate in hiddenCoordinates:
-                        i=coordinate[0]                        
-                        j=coordinate[1]
-                        Agent.board[i][j]=-1
-                        num=num-1
-            num_of_safe_square=count_surrounding_spaces(x,y,Agent)-Agent.board[x][y]
-            if num_of_safe_square-safe_revealed_neighbors==hidden:
-                #mark every neighbor as safe.
+
+            hiddenCoordinates = []
+            hidden = get_hidden_square(x, y, Agent, hiddenCoordinates)
+            safe_revealed_neighbors = get_revealed_safe_neighbors(x, y, Agent)
+            # mines = get_surrounding_mines(x, y, Agent)
+            if Agent.board[x][y] - revealed_mines == hidden:
+                # every neighbor is a mine
                 for coordinate in hiddenCoordinates:
-                    i=coordinate[0]
-                    j=coordinate[1]
+                    i = coordinate[0]
+                    j = coordinate[1]
+                    Agent.board[i][j] = -3
+                    num = num - 1
+            num_of_safe_square = count_surrounding_spaces(x, y, Agent) - Agent.board[x][y]
+            if num_of_safe_square - safe_revealed_neighbors == hidden:
+                # mark every neighbor as safe.
+                for coordinate in hiddenCoordinates:
+                    i = coordinate[0]
+                    j = coordinate[1]
 
 
 def Improved_Agent_GamePlay(Game, Agent):
@@ -63,11 +65,10 @@ def Improved_Agent_GamePlay(Game, Agent):
 
     minesFlagged = 0
 
-
     # Pull off a random element to get started
     while coveredSet:
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
-        #print(Agent.board[i][j])
+        # print(Agent.board[i][j])
         Agent, Game, safe, visited = checkZeros(Agent, Game, dimension, i, j, safe, visited)
         # Do a quick search to check for easily identified mines and safe spaces
         for x in range(0, dimension):
@@ -79,20 +80,12 @@ def Improved_Agent_GamePlay(Game, Agent):
                 neighbors = count_surrounding_spaces(x, y, Agent)
                 mines = get_surrounding_mines(x, y, Agent)
                 if Agent.board[x][y] > 0:
-
                     clue = Agent.board[x][y]
                     if hidden + mines == clue:  # All hidden are mines
-                        minesFlagged = markMines(minesFlagged, Agent, hiddenCords)
+                        markMines(Agent, hiddenCords, coveredSet)
                     elif mines == clue:  # All hidden are safe
                         for coord in hiddenCords:
                             flip(Game, Agent, coord[0], coord[1])
-
-    print(100 * (minesFlagged / Game.numberOfMines), "% of Mines found safely")
-    #Agent.display()
-
-
-    return 100 * (minesFlagged / Game.numberOfMines)
-
 
 
 
@@ -146,17 +139,15 @@ def clearZeros(Agent, Game, dimension, i, j, safe, visited):
     return Agent, Game, safe, visited
 
 
-
-
 def flip(Game, Agent, x, y):
     Agent.board[x][y] = Game.mineGrid[x][y]
 
 
-def markMines(flaggedMines, Agent, hidden):
-    for x in hidden:
-        Agent.board[x[0]][x[1]] = -1
-        flaggedMines = flaggedMines + 1
-    return flaggedMines
+def markMines(Agent, hidden, coveredSet):
+    for xy in hidden:
+        Agent.board[xy[0]][xy[1]] = -3
+        coveredSet.remove((xy[0], xy[1]))
+
 
 
 def pickRandomSquare(Game, Agent, coveredSet):
@@ -164,7 +155,7 @@ def pickRandomSquare(Game, Agent, coveredSet):
     xfirst = xfirst[0]
     coveredSet.remove(xfirst)
 
-    #print(xfirst)
+    # print(xfirst)
 
     x = xfirst[0]
     y = xfirst[1]
@@ -174,145 +165,138 @@ def pickRandomSquare(Game, Agent, coveredSet):
     return x, y, coveredSet
 
 
-
-def get_revealed_safe_neighbors(i,j,Agent):
-    safely_revealed=0
+def get_revealed_safe_neighbors(i, j, Agent):
+    safely_revealed = 0
     if i - 1 >= 0:
-        if Agent.board[i - 1][j]!=-2 and Agent.board[i - 1][j]!=-1:
+        if Agent.board[i - 1][j] >= 0:
             safely_revealed = safely_revealed + 1
     if j - 1 >= 0:
-        if Agent.board[i][j - 1]!=-2 and Agent.board[i][j-1]!=-1:
-            safely_revealed =safely_revealed + 1
+        if Agent.board[i][j - 1] >= 0:
+            safely_revealed = safely_revealed + 1
     if i + 1 < Agent.dimension:
-        if Agent.board[i + 1][j]!=-2 and Agent.board[i + 1][j]!=-1:
+        if Agent.board[i + 1][j] >= 0:
             safely_revealed = safely_revealed + 1
     if j + 1 < Agent.dimension:
-        if Agent.board[i][j + 1]!=-2 and Agent.board[i][j + 1]!=-1:
+        if Agent.board[i][j + 1] >= 0:
             safely_revealed = safely_revealed + 1
-    if i-1>=0 and j-1>=0:
-        if Agent.board[i-1][j-1]!=-2 and Agent.board[i-1][j-1]!=-1 :
-            safely_revealed=safely_revealed+1
-    if i-1>=0 and j+1<=Agent.dimension-1:
-        if Agent.board[i-1][j+1]!=-2 and Agent.board[i-1][j+1]!=-1 :
-            safely_revealed=safely_revealed+1                 
+    if i - 1 >= 0 and j - 1 >= 0:
+        if Agent.board[i - 1][j - 1] >= 0:
+            safely_revealed = safely_revealed + 1
+    if i - 1 >= 0 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i - 1][j + 1] >= 0:
+            safely_revealed = safely_revealed + 1
     if i+1<=Agent.dimension-1 and j+1<=Agent.dimension-1:
-        if Agent.board[i+1][j+1]!=-2 and Agent.board[i+1][j+1]!=-1 :
-            safely_revealed=safely_revealed
-    if i+1<=Agent.dimension-1 and j-1>=0:
-        if Agent.board[i+1][j-1]!=-2 and Agent.board[i+1][j-1]!=-1 :
-            safely_revealed=safely_revealed+1   
-    return safely_revealed  
+        if Agent.board[i + 1][j + 1] >= 0:
+            safely_revealed = safely_revealed
+    if i + 1 <= Agent.dimension - 1 and j - 1 >= 0:
+        if Agent.board[i + 1][j - 1] >= 0:
+            safely_revealed = safely_revealed + 1
+    return safely_revealed
 
 
-def count_surrounding_spaces(i,j,Agent):
-    neighbors=0
+def count_surrounding_spaces(i, j, Agent):
+    neighbors = 0
     if i - 1 >= 0:
-        neighbors=neighbors+1
+        neighbors = neighbors + 1
     if j - 1 >= 0:
-        neighbors=neighbors+1
+        neighbors = neighbors + 1
     if i + 1 < Agent.dimension:
-        neighbors=neighbors+1
+        neighbors = neighbors + 1
     if j + 1 < Agent.dimension:
-        neighbors=neighbors+1
-    if i-1>=0 and j-1>=0:
-        neighbors=neighbors+1
-    if i-1>=0 and j+1<=Agent.dimension-1:
-        neighbors=neighbors+1
-    if i+1<=Agent.dimension-1 and j+1<=Agent.dimension-1:
-        neighbors=neighbors+1
-    if i+1<=Agent.dimension-1 and j-1>=0:
-        neighbors=neighbors+1
+        neighbors = neighbors + 1
+    if i - 1 >= 0 and j - 1 >= 0:
+        neighbors = neighbors + 1
+    if i - 1 >= 0 and j + 1 <= Agent.dimension - 1:
+        neighbors = neighbors + 1
+    if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1:
+        neighbors = neighbors + 1
+    if i + 1 <= Agent.dimension - 1 and j - 1 >= 0:
+        neighbors = neighbors + 1
     return neighbors
 
 
-def get_surrounding_mines(i,j,Agent):
-    hidden=0
+def get_surrounding_mines(i, j, Agent):
+    hidden = 0
     if i - 1 >= 0:
-        if Agent.board[i - 1][j]==-1:
+        if Agent.board[i - 1][j] == -1 or Agent.board[i - 1][j] == -3:
             hidden = hidden + 1
     if j - 1 >= 0:
-        if Agent.board[i][j - 1]==-1:
+        if Agent.board[i][j - 1] == -1 or Agent.board[i][j - 1] == -3:
             hidden = hidden + 1
     if i + 1 < Agent.dimension:
-        if Agent.board[i + 1][j]==-1:
+        if Agent.board[i + 1][j] == -1 or Agent.board[i + 1][j] == -3:
             hidden = hidden + 1
     if j + 1 < Agent.dimension:
-        if Agent.board[i][j + 1]==-1:
+        if Agent.board[i][j + 1] == -1 or Agent.board[i][j + 1] == -3:
             hidden = hidden + 1
-    if i-1>=0 and j-1>=0:
-        if Agent.board[i-1][j-1]==-1:
-            hidden=hidden+1
-    if i-1>=0 and j+1<=Agent.dimension-1:
-        if Agent.board[i-1][j+1]==-1:
-            hidden=hidden+1
-    if i+1<=Agent.dimension-1 and j+1<=Agent.dimension-1:
-        if Agent.board[i+1][j+1]==-1:
-            hidden=hidden+1
-    if i+1<=Agent.dimension-1 and j-1>=0:
-        if Agent.board[i+1][j-1]==-1:
-            hidden=hidden+1
+    if i - 1 >= 0 and j - 1 >= 0:
+        if Agent.board[i - 1][j - 1] == -1 or Agent.board[i - 1][j - 1] == -3:
+            hidden = hidden + 1
+    if i - 1 >= 0 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i - 1][j + 1] == -1 or Agent.board[i - 1][j + 1] == -3:
+            hidden = hidden + 1
+    if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i + 1][j + 1] == -1 or Agent.board[i + 1][j + 1] == -3:
+            hidden = hidden + 1
+    if i + 1 <= Agent.dimension - 1 and j - 1 >= 0:
+        if Agent.board[i + 1][j - 1] == -1 or Agent.board[i + 1][j - 1] == -3:
+            hidden = hidden + 1
     return hidden
 
 
-
-def get_hidden_square(i,j,Agent,hiddenCoordinates):
-    hidden=0
+def get_hidden_square(i, j, Agent, hiddenCoordinates):
+    hidden = 0
     if i - 1 >= 0:
-        if Agent.board[i - 1][j]==-2:
+        if Agent.board[i - 1][j] == -2:
             hidden = hidden + 1
-            hiddenCoordinates.append([i-1,j])
+            hiddenCoordinates.append([i - 1, j])
     if j - 1 >= 0:
-        if Agent.board[i][j - 1]==-2:
+        if Agent.board[i][j - 1] == -2:
             hidden = hidden + 1
-            hiddenCoordinates.append([i,j-1])
+            hiddenCoordinates.append([i, j - 1])
     if i + 1 < Agent.dimension:
-        if Agent.board[i + 1][j]==-2:
+        if Agent.board[i + 1][j] == -2:
             hidden = hidden + 1
-            hiddenCoordinates.append([i+1,j])
+            hiddenCoordinates.append([i + 1, j])
     if j + 1 < Agent.dimension:
-        if Agent.board[i][j + 1]==-2:
+        if Agent.board[i][j + 1] == -2:
             hidden = hidden + 1
-            hiddenCoordinates.append([i,j+1])
-    if i-1>=0 and j-1>=0:
-        if Agent.board[i-1][j-1]==-2:
-            hidden=hidden+1
-            hiddenCoordinates.append([i-1,j-1])
-    if i-1>=0 and j+1<=Agent.dimension-1:
-        if Agent.board[i-1][j+1]==-2:
-            hidden=hidden+1   
-            hiddenCoordinates.append([i-1,j+1])                 
-    if i+1<=Agent.dimension-1 and j+1<=Agent.dimension-1:
-        if Agent.board[i+1][j+1]==-2:
-            hidden=hidden+1
-            hiddenCoordinates.append([i+1,j+1])
-    if i+1<=Agent.dimension-1 and j-1>=0:
-        if Agent.board[i+1][j-1]==-2:
-            hidden=hidden+1
-            hiddenCoordinates.append([i+1,j-1])     
-    return hidden   
-
-
+            hiddenCoordinates.append([i, j + 1])
+    if i - 1 >= 0 and j - 1 >= 0:
+        if Agent.board[i - 1][j - 1] == -2:
+            hidden = hidden + 1
+            hiddenCoordinates.append([i - 1, j - 1])
+    if i - 1 >= 0 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i - 1][j + 1] == -2:
+            hidden = hidden + 1
+            hiddenCoordinates.append([i - 1, j + 1])
+    if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i + 1][j + 1] == -2:
+            hidden = hidden + 1
+            hiddenCoordinates.append([i + 1, j + 1])
+    if i + 1 <= Agent.dimension - 1 and j - 1 >= 0:
+        if Agent.board[i + 1][j - 1] == -2:
+            hidden = hidden + 1
+            hiddenCoordinates.append([i + 1, j - 1])
+    return hidden
 
 
 if __name__ == '__main__':
 
     sum = 0
 
-
     answerSheet = MineGrid(16, 50)
     agent = AgentBoard(16)
-    Basic_Agent_GamePlay(answerSheet, agent)
+    Improved_Agent_GamePlay(answerSheet, agent)
     answerSheet.display()
     agent.display()
-    answer=0
-    found=0
+    answer = 0
+    found = 0
     for x in range(agent.dimension):
         for y in range(agent.dimension):
-            if agent.board[x][y]==-1:
-                found=found+1
-            if answerSheet.mineGrid[x][y]==-1:
-                answer=answer+1
-    
-    print((found/answer))
+            if agent.board[x][y] == -3:
+                found = found + 1
+            if answerSheet.mineGrid[x][y] == -1:
+                answer = answer + 1
 
-
+    print((found / answer))
