@@ -73,37 +73,35 @@ def Improved_Agent_GamePlay(Game, Agent):
 
     minesFlagged = 0
 
+
     # Pull off a random element to get started
     while coveredSet:
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
-        print(Agent.board[i][j])
+        #print(Agent.board[i][j])
         Agent, Game, safe, visited = checkZeros(Agent, Game, dimension, i, j, safe, visited)
         # Do a quick search to check for easily identified mines and safe spaces
-        for _ in range(1):
-            for x in range(0, dimension):
-                for y in range(0, dimension):
+        for x in range(0, dimension):
+            for y in range(0, dimension):
 
-                    safe2 = get_revealed_safe_neighbors(x, y, Agent)
-                    hiddenCords = []
-                    hidden = get_hidden_square(x, y, Agent, hiddenCords)
-                    neighbors = count_surrounding_spaces(x, y, Agent)
-                    mines = get_surrounding_mines(x, y, Agent)
-                    if Agent.board[x][y] > 0:
+                safe2 = get_revealed_safe_neighbors(x, y, Agent)
+                hiddenCords = []
+                hidden = get_hidden_square(x, y, Agent, hiddenCords)
+                neighbors = count_surrounding_spaces(x, y, Agent)
+                mines = get_surrounding_mines(x, y, Agent)
+                if Agent.board[x][y] > 0:
 
-                        clue = Agent.board[x][y]
-                        print(clue, hidden)
-                        if hidden + mines == clue:  # All hidden are mines
-                            minesFlagged = markMines(minesFlagged, Agent, hiddenCords)
-                        elif mines == clue:  # All hidden are safe
-                            for coord in hiddenCords:
-                                flip(Game, Agent, coord[0], coord[1])
-
-
+                    clue = Agent.board[x][y]
+                    if hidden + mines == clue:  # All hidden are mines
+                        minesFlagged = markMines(minesFlagged, Agent, hiddenCords)
+                    elif mines == clue:  # All hidden are safe
+                        for coord in hiddenCords:
+                            flip(Game, Agent, coord[0], coord[1])
 
     print(100 * (minesFlagged / Game.numberOfMines), "% of Mines found safely")
-    Agent.display()
+    #Agent.display()
 
 
+    return 100 * (minesFlagged / Game.numberOfMines)
 
 
 
@@ -308,12 +306,17 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
 
 if __name__ == '__main__':
 
+    sum = 0
+    for _ in range(25):
 
-    answerSheet = MineGrid(16, 40)
-    agent = AgentBoard(16)
-    #Basic_Agent_GamePlay(answerSheet,agent)
+        answerSheet = MineGrid(16, 40)
+        agent = AgentBoard(16)
+        #Basic_Agent_GamePlay(answerSheet,agent)
 
-    Improved_Agent_GamePlay(answerSheet, agent)
+        sum = sum + Improved_Agent_GamePlay(answerSheet, agent)
+    print(sum/25)
 
-    answerSheet.display()
+
+    #answerSheet.display()
     #agent.display()
+
