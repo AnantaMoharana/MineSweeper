@@ -11,52 +11,42 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def Basic_Agent_GamePlay(Game, Agent):
-
-    num=Game.numberOfMines
-    visitedCells=[]
+    gamecells=[]
     bombCells=[]
+    num=Game.numberOfMines
     revealed_mines=0
-    while(num != 0):
-        i=random.randint(0,Game.dimension-1)
-        j=random.randint(0,Game.dimension-1)
-        if Agent.board[i][j]!=-2: #if we have already revealed the spot we continue
+
+    for x in range(Game.dimension):
+        for y in range(Game.dimension):
+            gamecells.append((x,y))
+
+    while(len(gamecells)!=0):
+
+        x, y, gamecells = pickRandomSquare(Game, Agent, gamecells)
+        if  Agent.board[x][y]==-1:
+            num=num-1
+            bombCells.append([x,y])
+            revealed_mines=revealed_mines+1
             continue
         else:
-            Agent.board[i][j]=Game.mineGrid[i][j]
-
-            if Game.mineGrid[i][j]==-1:
-                Agent.board[i][j]=-1
-                num=num-1
-                bombCells.append([i,j])
-                revealed_mines=revealed_mines+1
-                continue
-            else:
-                #number of safe spaces
-                num_of_safe_square=count_surrounding_spaces(i,j,Agent)-Agent.board[i][j] #change to number of surrounding square
-                #number of mines surrounding the cell
-                num_of_surrounding_mines=Game.mineGrid[i][j]
-                #hidden neighbors
-                hiddenCoordinates=[]
-                hidden=get_hidden_square(i,j,Agent,hiddenCoordinates)
-
-                safe_revealed_neighbors=get_revealed_safe_neighbors(i,j,Agent)
-
-                if Game.numberOfMines-revealed_mines==hidden:
+             
+            hiddenCoordinates=[]
+            hidden=get_hidden_square(x,y,Agent,hiddenCoordinates)
+            safe_revealed_neighbors=get_revealed_safe_neighbors(x,y,Agent)
+            #mines = get_surrounding_mines(x, y, Agent)
+            if Agent.board[x][y]-revealed_mines==hidden:
                     #every neighbor is a mine
                     for coordinate in hiddenCoordinates:
-                        x=coordinate[0]
-                        y=coordinate[1]
-                        Agent.board[x][y]=-1
+                        i=coordinate[0]                        
+                        j=coordinate[1]
+                        Agent.board[i][j]=-1
                         num=num-1
-                        visitedCells.append([x,y])
-                    
-                if num_of_safe_square-safe_revealed_neighbors==hidden:
-                    #mark every neighbor as safe.
-                    for coordinate in hiddenCoordinates:
-                        x=coordinate[0]
-                        y=coordinate[1]
-                        Agent.board[x][y]=Game.mineGrid[x][y]
-                        visitedCells.append([x,y])
+            num_of_safe_square=count_surrounding_spaces(x,y,Agent)-Agent.board[x][y]
+            if num_of_safe_square-safe_revealed_neighbors==hidden:
+                #mark every neighbor as safe.
+                for coordinate in hiddenCoordinates:
+                    i=coordinate[0]
+                    j=coordinate[1]
 
 
 def Improved_Agent_GamePlay(Game, Agent):
@@ -307,16 +297,22 @@ def get_hidden_square(i,j,Agent,hiddenCoordinates):
 if __name__ == '__main__':
 
     sum = 0
-    for _ in range(25):
-
-        answerSheet = MineGrid(16, 40)
-        agent = AgentBoard(16)
-        #Basic_Agent_GamePlay(answerSheet,agent)
-
-        sum = sum + Improved_Agent_GamePlay(answerSheet, agent)
-    print(sum/25)
 
 
-    #answerSheet.display()
-    #agent.display()
+    answerSheet = MineGrid(16, 50)
+    agent = AgentBoard(16)
+    Basic_Agent_GamePlay(answerSheet, agent)
+    answerSheet.display()
+    agent.display()
+    answer=0
+    found=0
+    for x in range(agent.dimension):
+        for y in range(agent.dimension):
+            if agent.board[x][y]==-1:
+                found=found+1
+            if answerSheet.mineGrid[x][y]==-1:
+                answer=answer+1
+    
+    print((found/answer))
+
 
