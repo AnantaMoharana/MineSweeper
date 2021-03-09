@@ -30,6 +30,8 @@ def Basic_Agent_GamePlay(Game, Agent):
             bombCells.append([x, y])
             revealed_mines = revealed_mines + 1
             continue
+        elif Agent.board[x][y] == -3:
+            continue
         else:
 
             hiddenCoordinates = []
@@ -42,6 +44,7 @@ def Basic_Agent_GamePlay(Game, Agent):
                     i = coordinate[0]
                     j = coordinate[1]
                     Agent.board[i][j] = -3
+                    gamecells.remove([i, j])
                     num = num - 1
             num_of_safe_square = count_surrounding_spaces(x, y, Agent) - Agent.board[x][y]
             if num_of_safe_square - safe_revealed_neighbors == hidden:
