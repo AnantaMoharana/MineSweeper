@@ -102,13 +102,15 @@ class AgentBoard:
 
         # Add colors to grid
         _, ax = plt.subplots()
-        ax.imshow(self.board, cmap=cm.get_cmap('Reds', 10))
+        ax.imshow(self.board, cmap=cm.get_cmap('Reds', 11))
 
         # Add numbers to grid
         for i in range(self.dimension):
             for j in range(self.dimension):
                 if self.board[i][j] == -1:
-                    ax.text(j, i, 'X', ha="center", va="center", color="black")
+                    ax.text(j, i, 'X', ha="center", va="center", color="red")
+                elif self.board[i][j] == -3:
+                    ax.text(j, i, '[X]', ha="center", va="center", color="black")
                 elif self.board[i][j] == -2:
                     ax.text(j, i, '-', ha="center", va="center", color="black")
                 else:
