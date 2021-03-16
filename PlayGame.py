@@ -69,7 +69,69 @@ def Improved_Agent_GamePlay(Game, Agent):
 
     # Pull off a random element to get started
     while coveredSet:
-        #i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet) commented out for the sake of the demonstration
+        #i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
+        i,j=1,1
+
+
+        if Agent.board[i][j]==0:
+            zero.append((i,j))
+            reveal_safe_zeros(Agent,Game,zero,coveredSet)
+        else:
+            neighbor_list=[]
+            get_neighboring_spots(i,j,neighbor_list,Agent)
+            set_spots=[]
+            get_revealed_safe_neighbors(i,j,Agent,set_spots)
+            mine_sets=[]
+            sets_list=[]
+            for item in set_spots:
+                set_items=[]
+                get_neighboring_spots(item[1][0],item[1][1],set_items,Agent)
+                sets_list.append(set_items)
+                mine_sets.append([item[0],set_items])
+            
+
+            if len(sets_list)>1:
+                intersection(sets_list)
+                sets_list=sets_list.pop()
+                for i in range (len(sets_list)):
+                    copy=(sets_list[i][0],sets_list[i][1])
+                    if copy not in coveredSet:
+                        sets_list.remove(copy)
+                if len(sets_list)>0:
+                    
+                    print(sets_list)
+                    markMines(Agent, sets_list, coveredSet,visited)
+            for item in sets_list:
+                for info in mine_sets:
+                    if item in info[1]:
+                        info[1].remove(item)
+                        info[0]=info[0]-1
+
+            for item in mine_sets:
+                if item[0]==0:
+                    revealed(Game,Agent,item[1],coveredSet)
+
+            break
+
+
+
+
+                
+            
+            
+
+
+
+
+
+        
+        
+
+
+
+
+
+'''         #i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet) commented out for the sake of the demonstration
         # print(Agent.board[i][j])
         i,j=1,1
         coveredSet.remove((2,2))
@@ -131,13 +193,21 @@ def Improved_Agent_GamePlay(Game, Agent):
                     Agent.board[xy[0]][xy[1]]=Game.mineGrid[xy[0]][xy[1]]
                 for xy in set2:
                     Agent.board[xy[0]][xy[1]]=Game.mineGrid[xy[0]][xy[1]]
-                
+                 '''
             
-
+def revealed(Game,Agent, spots, coveredSet):
+    for item in spots:
+        x=item[0]
+        y=item[1]
+        Agent.board[x][y]=Game.mineGrid[x][y]
+        coveredSet.remove((x,y))
 #intersection method from geeks for geeks
-def intersection(lst1, lst2): 
-    lst3 = [value for value in lst1 if value in lst2] 
-    return lst3 
+def intersection(sets): 
+    while len(sets)>1:
+        lst1=sets.pop()
+        lst2=sets.pop()
+        lst3 = [value for value in lst1 if value in lst2]
+        sets.append(lst3)
 
 
 
@@ -171,7 +241,7 @@ def get_neighboring_spots(i,j, neighbor_list,Agent):
         neighbor_list.append([i+1,j-1])
 
 
-def reveal_safe_zeros(Agent, Game, zero):
+def reveal_safe_zeros(Agent, Game, zero,coveredSet):
     while zero:
         xfirst = random.choices(zero)
         xfirst = xfirst[0]
@@ -186,41 +256,50 @@ def reveal_safe_zeros(Agent, Game, zero):
             Agent.board[i-1][j]=Game.mineGrid[i-1][j]
             if Agent.board[i-1][j]==0:
                 zero.append([i-1,j])
+                coveredSet.remove((i-1,j))
+
    
         if j - 1 >= 0 and Agent.board[i][j-1]==-2:
             Agent.board[i][j-1]=Game.mineGrid[i][j-1]
             if Agent.board[i][j-1]==0:
                 zero.append([i,j-1])
+                coveredSet.remove((i,j-1))
     
         if i + 1 < Agent.dimension and Agent.board[i+1][j]==-2:
             Agent.board[i+1][j]=Game.mineGrid[i+1][j]
             if Agent.board[i+1][j]==0:
                 zero.append([i+1,j])
+                coveredSet.remove((i+1,j))
     
         if j + 1 < Agent.dimension and Agent.board[i][j+1]==-2:
             Agent.board[i][j+1]=Game.mineGrid[i][j+1]
             if Agent.board[i][j+1]==0:
                 zero.append([i,j+1])
+                coveredSet.remove((i,j+1))
     
         if i - 1 >= 0 and j - 1 >= 0 and Agent.board[i-1][j-1]==-2:
             Agent.board[i-1][j-1]=Game.mineGrid[i-1][j-1]
             if Agent.board[i-1][j-1]==0:
                 zero.append([i-1,j-1])
+                coveredSet.remove((i-1,j-1))
     
         if i - 1 >= 0 and j + 1 <= Agent.dimension - 1 and Agent.board[i-1][j+1]==-2:
             Agent.board[i-1][j+1]=Game.mineGrid[i-1][j+1]
             if Agent.board[i-1][j+1]==0:
                 zero.append([i-1,j+1])
+                coveredSet.remove((i-1,j+1))
     
         if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1 and Agent.board[i+1][j+1]==-2:
             Agent.board[i+1][j+1]=Game.mineGrid[i+1][j+1]
             if Agent.board[i+1][j+1]==0:
                 zero.append([i+1,j+1])
+                coveredSet.remove((i+1,j+1))
     
         if i + 1 <= Agent.dimension - 1 and j - 1 >= 0 and Agent.board[i+1][j-1]==-2:
             Agent.board[i+1][j-1]=Game.mineGrid[i+1][j-1]
             if Agent.board[i+1][j-1]==0:
                 zero.append([i+1,j-1])
+                coveredSet.remove((i+1,j-1))
 
 
 
@@ -430,9 +509,17 @@ def get_hidden_square(i, j, Agent, hiddenCoordinates):
     return hidden
 
 
+
 if __name__ == '__main__':
 
     sum = 0
+    s1=[[1,0],[1,2],[4,3]]
+    s2=[[1,0],[1,3,],[4,4]]
+    s3=[[1,0],[1,4],[4,5]]
+    setlist = [s1,s2,s3]
+    intersection(setlist)
+    u=setlist.pop()
+    print(u)
 
     answerSheet = MineGrid(3, 0)
     answerSheet.mineGrid[0][0]=1
@@ -450,15 +537,15 @@ if __name__ == '__main__':
     agent.board[2][2]=3
     Improved_Agent_GamePlay(answerSheet, agent)
 
-    answer = 0
-    found = 0
-    for x in range(agent.dimension):
-        for y in range(agent.dimension):
-            if agent.board[x][y] == -3:
-                found = found + 1
-            if answerSheet.mineGrid[x][y] == -1:
-                answer = answer + 1
-
-    print((found / answer))
+    #answer = 0
+    #found = 0
+    #for x in range(agent.dimension):
+    #    for y in range(agent.dimension):
+    #        if agent.board[x][y] == -3:
+    #            found = found + 1
+    #        if answerSheet.mineGrid[x][y] == -1:
+    #            answer = answer + 1
+    #            
+    #print((found / answer))
     answerSheet.display()
     agent.display()
