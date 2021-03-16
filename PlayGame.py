@@ -66,28 +66,80 @@ def Improved_Agent_GamePlay(Game, Agent):
 
     minesFlagged = 0
     zero=[]
-
+    mine_sets=[]
+    sets_list=[]
     # Pull off a random element to get started
     while coveredSet:
-        #i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
-        i,j=1,1
-
-
+        i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
+        neighbor_list=[]
         if Agent.board[i][j]==0:
             zero.append((i,j))
-            reveal_safe_zeros(Agent,Game,zero,coveredSet)
+            nonzero=[]
+            reveal_safe_zeros(Agent,Game,zero,coveredSet,nonzero)
+            Agent.display()
+            while nonzero:
+                neighbor_list.clear()
+                spot=nonzero.pop(0)
+                get_revealed_safe_non_zero_neighbors(spot[0],spot[1],Agent,neighbor_list)
+                #get neighboring revealed spots
+                set_items=[]
+                get_hidden_neighboring_spots(spot[0],spot[1],set_items,Agent)
+                mine_sets.append([Agent.board[spot[0]][spot[1]],set_items,spot])
+                sets_list.append(set_items)
+
+                for item in neighbor_list:
+                    set_items=[]
+                    get_hidden_neighboring_spots(item[1][0],item[1][1],set_items,Agent)
+                    sets_list.append(set_items)
+                    mine_sets.append([item[0],set_items,item[1]])
+
+                if len(sets_list)>2:
+                    intersection(sets_list)
+                    sets_list=sets_list.pop()
+                    for i in range (len(sets_list)):
+                        copy=(sets_list[i][0],sets_list[i][1])
+                        if copy not in coveredSet:
+                            copy=[sets_list[i][0],sets_list[i][1]]
+                            sets_list.remove(copy)
+                else:
+                    nonzero.append(spot)
+                if len(sets_list)>0:
+                    if len(sets_list)==2:
+                        intersection(sets_list)
+                        sets_list=sets_list.pop()
+                    print(sets_list)
+                    markMines(Agent,sets_list, coveredSet,visited)
+                for item in sets_list:
+                    for info in mine_sets:
+                        if item in info[1]:
+                            info[1].remove(item)
+                            info[0]=info[0]-1
+
+                for item in mine_sets:
+                    if item[0]==0:
+                        hiddenCords=[]
+                        if (item[2][0], item[2][1]) in coveredSet:
+                            coveredSet.remove((item[2][0], item[2][1]))
+                        if (item[2][0], item[2][1]) in nonzero:
+                            nonzero.remove((item[2][0], item[2][1]))
+                        hidden = get_hidden_square(item[2][0], item[2][1], Agent, hiddenCords)
+                        for coord in hiddenCords:
+                            flip(Game, Agent, coord[0], coord[1])
+                Agent.display()
+                    
+
         else:
-            neighbor_list=[]
+            
             get_neighboring_spots(i,j,neighbor_list,Agent)
             set_spots=[]
             get_revealed_safe_neighbors(i,j,Agent,set_spots)
-            mine_sets=[]
-            sets_list=[]
+            
+            
             for item in set_spots:
                 set_items=[]
                 get_neighboring_spots(item[1][0],item[1][1],set_items,Agent)
                 sets_list.append(set_items)
-                mine_sets.append([item[0],set_items])
+                mine_sets.append([item[0],set_items,item[1]])
             
 
             if len(sets_list)>1:
@@ -96,6 +148,7 @@ def Improved_Agent_GamePlay(Game, Agent):
                 for i in range (len(sets_list)):
                     copy=(sets_list[i][0],sets_list[i][1])
                     if copy not in coveredSet:
+                        copy=[sets_list[i][0],sets_list[i][1]]
                         sets_list.remove(copy)
                 if len(sets_list)>0:
                     
@@ -109,98 +162,90 @@ def Improved_Agent_GamePlay(Game, Agent):
 
             for item in mine_sets:
                 if item[0]==0:
-                    revealed(Game,Agent,item[1],coveredSet)
+                    hiddenCords=[]
+                    hidden = get_hidden_square(x, y, Agent, hiddenCords)
+                    for coord in hiddenCords:
+                        flip(Game, Agent, coord[0], coord[1])
 
-            break
+def get_hidden_neighboring_spots(i,j, neighbor_list,Agent):        
+    if i - 1 >= 0:
+        if Agent.board[i-1][j]==-2:
+            neighbor_list.append([i-1,j])
+
+    if j - 1 >= 0:
+        if Agent.board[i][j-1]==-2:
+            neighbor_list.append([i,j-1])
+
+    if i + 1 < Agent.dimension:
+        if Agent.board[i+1][j]==-2:
+            neighbor_list.append([i+1,j])
+
+    if j + 1 < Agent.dimension:
+        if Agent.board[i][j+1]==-2:
+            neighbor_list.append([i,j+1])
+
+    if i - 1 >= 0 and j - 1 >= 0:
+        if Agent.board[i-1][j-1]==-2:
+            neighbor_list.append([i-1,j-1])
+
+    if i - 1 >= 0 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i-1][j+1]==-2:
+            neighbor_list.append([i-1,j+1])
+
+    if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i+1][j+1]==-2:
+            neighbor_list.append([i+1,j+1])
+
+    if i + 1 <= Agent.dimension - 1 and j - 1 >= 0:
+        if Agent.board[i+1][j-1]==-2:
+            neighbor_list.append([i+1,j-1])
+
+def get_revealed_safe_non_zero_neighbors(i, j, Agent, set_spots=[]):
+    safely_revealed = 0
+    if i - 1 >= 0:
+        if Agent.board[i - 1][j] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i-1][j],[i-1,j]))
+    if j - 1 >= 0:
+        if Agent.board[i][j - 1] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i][j-1],[i,j-1]))
+    if i + 1 < Agent.dimension:
+        if Agent.board[i + 1][j] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i+1][j],[i+1,j]))
+    if j + 1 < Agent.dimension:
+        if Agent.board[i][j + 1] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i][j+1],[i,j+1]))
+    if i - 1 >= 0 and j - 1 >= 0:
+        if Agent.board[i - 1][j - 1] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i-1][j-1],[i-1,j-1]))
+    if i - 1 >= 0 and j + 1 <= Agent.dimension - 1:
+        if Agent.board[i - 1][j + 1] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i-1][j+1],[i-1,j+1]))
+    if i+1<=Agent.dimension-1 and j+1<=Agent.dimension-1:
+        if Agent.board[i + 1][j + 1] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i+1][j+1],[i+1,j+1]))
+    if i + 1 <= Agent.dimension - 1 and j - 1 >= 0:
+        if Agent.board[i + 1][j - 1] > 0:
+            safely_revealed = safely_revealed + 1
+            set_spots.append((Agent.board[i+1][j-1],[i+1,j-1]))
+    return safely_revealed  
 
 
 
-
-                
-            
-            
-
-
-
-
-
-        
-        
-
-
-
-
-
-'''         #i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet) commented out for the sake of the demonstration
-        # print(Agent.board[i][j])
-        i,j=1,1
-        coveredSet.remove((2,2))
-        #get the neighbors of the spot
-        neighbor_list=[]
-        get_neighboring_spots(i,j,neighbor_list,Agent)
-        #create a sub environment 3for tongihts example it will be a 3x3 matrix
-        #
-        #
-        #
-        #
-        #
-        #Get revealed neighbors
-        set_spots=[]
-        get_revealed_safe_neighbors(i,j,Agent,set_spots)
-        print('Progress')
-        mine_sets=[]
-        for item in set_spots:
-            set_items=[]
-            get_neighboring_spots(item[1][0],item[1][1],set_items,Agent)
-            mine_sets.append((item[0],set_items))
-        # we now have obtained our sets
-
-        while mine_sets and len(mine_sets)>1:
-            set1=mine_sets[len(mine_sets)-1]
-            mine_sets.remove(set1)
-            set2=mine_sets[len(mine_sets)-1]
-
-            suround1=set1[0]
-            suround2=set2[0]
-            set1=set1[1]
-            set2=set2[1]
-            intersect=intersection(set1,set2)
-            for xy in intersect:
-                Agent.board[xy[0]][xy[1]]=-3
-                set1.remove(xy)
-                set2.remove(xy)
-                suround1=suround1-1
-                suround2=suround2-1
-            if suround1==len(set1):
-                #markMines(Agent,set1)
-                #do some updating
-                while set1:
-                    xy=set1[len(set1)-1]
-                    Agent.board[xy[0]][xy[1]]=-3
-                    set1.remove(xy)
-                    suround1=suround1-1
-
-            if suround2==len(set2):
-                while set1:
-                    xy=set1[len(set1)-1]
-                    Agent.board[xy[0]][xy[1]]=-3
-                    set2.remove(xy)
-                    suround1=suround1-1
-                print("progress")
-                #also do some updating
-            if suround2==0 and suround1==0:
-                for xy in set1:
-                    Agent.board[xy[0]][xy[1]]=Game.mineGrid[xy[0]][xy[1]]
-                for xy in set2:
-                    Agent.board[xy[0]][xy[1]]=Game.mineGrid[xy[0]][xy[1]]
-                 '''
-            
 def revealed(Game,Agent, spots, coveredSet):
     for item in spots:
         x=item[0]
         y=item[1]
         Agent.board[x][y]=Game.mineGrid[x][y]
         coveredSet.remove((x,y))
+
+
 #intersection method from geeks for geeks
 def intersection(sets): 
     while len(sets)>1:
@@ -208,11 +253,6 @@ def intersection(sets):
         lst2=sets.pop()
         lst3 = [value for value in lst1 if value in lst2]
         sets.append(lst3)
-
-
-
-
-
 
 #Helper methods
 def get_neighboring_spots(i,j, neighbor_list,Agent):        
@@ -241,7 +281,7 @@ def get_neighboring_spots(i,j, neighbor_list,Agent):
         neighbor_list.append([i+1,j-1])
 
 
-def reveal_safe_zeros(Agent, Game, zero,coveredSet):
+def reveal_safe_zeros(Agent, Game, zero,coveredSet,nonzero):
     while zero:
         xfirst = random.choices(zero)
         xfirst = xfirst[0]
@@ -257,6 +297,8 @@ def reveal_safe_zeros(Agent, Game, zero,coveredSet):
             if Agent.board[i-1][j]==0:
                 zero.append([i-1,j])
                 coveredSet.remove((i-1,j))
+            else:
+                nonzero.append((i-1,j))
 
    
         if j - 1 >= 0 and Agent.board[i][j-1]==-2:
@@ -264,42 +306,56 @@ def reveal_safe_zeros(Agent, Game, zero,coveredSet):
             if Agent.board[i][j-1]==0:
                 zero.append([i,j-1])
                 coveredSet.remove((i,j-1))
+            else:
+                nonzero.append((i,j-1))
     
         if i + 1 < Agent.dimension and Agent.board[i+1][j]==-2:
             Agent.board[i+1][j]=Game.mineGrid[i+1][j]
             if Agent.board[i+1][j]==0:
                 zero.append([i+1,j])
                 coveredSet.remove((i+1,j))
+            else:
+                nonzero.append((i+1,j))
     
         if j + 1 < Agent.dimension and Agent.board[i][j+1]==-2:
             Agent.board[i][j+1]=Game.mineGrid[i][j+1]
             if Agent.board[i][j+1]==0:
                 zero.append([i,j+1])
                 coveredSet.remove((i,j+1))
+            else:
+                nonzero.append((i,j+1))
     
         if i - 1 >= 0 and j - 1 >= 0 and Agent.board[i-1][j-1]==-2:
             Agent.board[i-1][j-1]=Game.mineGrid[i-1][j-1]
             if Agent.board[i-1][j-1]==0:
                 zero.append([i-1,j-1])
                 coveredSet.remove((i-1,j-1))
+            else:
+                nonzero.append((i-1,j-1))
     
         if i - 1 >= 0 and j + 1 <= Agent.dimension - 1 and Agent.board[i-1][j+1]==-2:
             Agent.board[i-1][j+1]=Game.mineGrid[i-1][j+1]
             if Agent.board[i-1][j+1]==0:
                 zero.append([i-1,j+1])
                 coveredSet.remove((i-1,j+1))
+            else:
+                nonzero.append((i-1,j+1))
     
         if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1 and Agent.board[i+1][j+1]==-2:
             Agent.board[i+1][j+1]=Game.mineGrid[i+1][j+1]
             if Agent.board[i+1][j+1]==0:
                 zero.append([i+1,j+1])
                 coveredSet.remove((i+1,j+1))
+            else:
+                nonzero.append((i+1,j+1))
     
         if i + 1 <= Agent.dimension - 1 and j - 1 >= 0 and Agent.board[i+1][j-1]==-2:
             Agent.board[i+1][j-1]=Game.mineGrid[i+1][j-1]
             if Agent.board[i+1][j-1]==0:
                 zero.append([i+1,j-1])
                 coveredSet.remove((i+1,j-1))
+            else:
+                nonzero.append((i+1,j-1))
 
 
 
@@ -521,20 +577,13 @@ if __name__ == '__main__':
     u=setlist.pop()
     print(u)
 
-    answerSheet = MineGrid(3, 0)
-    answerSheet.mineGrid[0][0]=1
-    answerSheet.mineGrid[0][1]=2
-    answerSheet.mineGrid[0][2]=2
-    answerSheet.mineGrid[1][0]=2
-    answerSheet.mineGrid[1][1]= -1   
-    answerSheet.mineGrid[1][2]=-1
-    answerSheet.mineGrid[2][0]=2
-    answerSheet.mineGrid[2][1]=-1
-    answerSheet.mineGrid[2][2]=3
+    answerSheet = MineGrid(10, 6)
+
 
     agent = AgentBoard(answerSheet.dimension)
-    agent.board[0][0]=1
-    agent.board[2][2]=3
+    answerSheet.display()
+    #agent.board[0][0]=1
+    #agent.board[2][2]=3
     Improved_Agent_GamePlay(answerSheet, agent)
 
     #answer = 0
