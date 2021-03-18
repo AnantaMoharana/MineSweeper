@@ -69,6 +69,7 @@ def Improved_Agent_GamePlay(Game, Agent):
 
     # Pull off a random element to get started
     while coveredSet:
+        #Agent.display()
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
         neighbor_list=[]
         if Agent.board[i][j]==0:
@@ -78,6 +79,7 @@ def Improved_Agent_GamePlay(Game, Agent):
             Agent.display()
             tracker=[]
             while nonzero:
+                #answerSheet.display()
                 neighbor_list.clear()
                 spot=nonzero.pop(0)
                 get_revealed_safe_non_zero_neighbors(spot[0],spot[1],Agent,neighbor_list)
@@ -96,7 +98,7 @@ def Improved_Agent_GamePlay(Game, Agent):
                         mine_sets.append([item[0],set_items,item[1]])
                         tracker.append(item[1])
 
-                if len(sets_list)>2:
+                if len(sets_list)>2: #2
                     intersection(sets_list)
                     sets_list=sets_list.pop()
                     for i in range (len(sets_list)):
@@ -135,7 +137,45 @@ def Improved_Agent_GamePlay(Game, Agent):
                                 nonzero.remove((coord[0], coord[1]))
                         mine_sets.remove(item)
 
+                
+
+                
+
+                for item in sets_list:
+                    neighboring_spots=[]
+                    get_revealed_safe_non_zero_neighbors(item[0],item[1],Agent, neighboring_spots)
+
+                    for spot in neighboring_spots:
+                        value=spot[0]
+                        x=spot[1][0]
+                        y=spot[1][1]
+                        if value-1==0:
+                            if (x,y) in coveredSet:
+                                coveredSet.remove((x,y))
+                            if (x,y) in nonzero:
+                                nonzero.remove((x,y))
+                            covered=[]
+                            get_hidden_neighboring_spots(x,y,covered,Agent)
+                            revealed(Game,Agent,covered,coveredSet)
+
+                           # for spot in covered:
+                           #     spots_neighbors=[]
+                           #     get_hidden_neighboring_spots(spot[0],spots[1],spots_neighbors)
+                           #     for element in spots_neighbors:
+                           #         if element in neighbor_list:
+                           #             spots_neighbors.remove(element)
+                           # for spot in spots_neighbors:
+                           #     set_items2=[]
+                           #     get_hidden_neighboring_spots(item[1][0],item[1][1],set_items2,Agent)
+                           #     sets_list2.append(set_items)  
+#
+                            #set_items= 
                 Agent.display()
+
+
+
+
+
                
                     
 
@@ -591,11 +631,11 @@ def get_hidden_square(i, j, Agent, hiddenCoordinates=[]):
 if __name__ == '__main__':
 
 
-    answerSheet = MineGrid(10, 5)
+    answerSheet = MineGrid(10, 4)
 
 
     agent = AgentBoard(answerSheet.dimension)
-    answerSheet.display()
+    
     #agent.board[0][0]=1
     #agent.board[2][2]=3
     Improved_Agent_GamePlay(answerSheet, agent)
@@ -608,7 +648,7 @@ if __name__ == '__main__':
     found = 0
     for x in range(agent.dimension):
         for y in range(agent.dimension):
-            if agent.board[x][y] == -3:
+            if agent.board[x][y] == -3 and answerSheet.mineGrid[x][y] == -1:
                 found = found + 1
             if answerSheet.mineGrid[x][y] == -1:
                 answer = answer + 1
