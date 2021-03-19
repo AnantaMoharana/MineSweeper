@@ -82,11 +82,11 @@ def Improved_Agent_GamePlay(Game, Agent):
 
             reveal_safe_zeros(Agent,Game,zero,coveredSet,nonzero)
             Agent.display()
-            spots_to_visit=[]
-            copy=spots_to_visit
-            tracker=nonzero
+            nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1])}
+            spots_to_visit=list(nonzero)
             while nonzero:
-                spot=random.choice(list(nonzero))
+                spot=spots_to_visit.pop(0)
+                print(spot)
                 #spot=(4,7)
                 if spot in coveredSet:
                     coveredSet.remove(spot)
@@ -145,11 +145,18 @@ def Improved_Agent_GamePlay(Game, Agent):
                 while key_to_remove:
 
                     remove=key_to_remove.pop()
+                    if remove in spots_to_visit:
+                        spots_to_visit.remove(remove)
                     safe=[]
                     get_hidden_neighboring_spots(remove[0],remove[1],safe,Agent)
 
                     for spot in safe:
                         Agent.board[spot[0]][spot[1]]=Game.mineGrid[spot[0]][spot[1]]
+                        #add the new spot to the list
+#
+                            #fill this out and then go to bed
+
+
                         if (spot[0],spot[1]) in coveredSet:
                             coveredSet.remove((spot[0],spot[1]))
 
@@ -159,6 +166,9 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         if nonzero[(spot[0],spot[1])]==0:
                             key_to_remove.append((spot[0],spot[1]))
+                        nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1])}
+                        spots_to_visit=list(nonzero)
+                        
 
                     #spots_to_visit.remove(remove)
                     nonzero.pop(remove)
@@ -167,6 +177,9 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                 Agent.display()
         else: # if the spot we reveal is not zero
+            if Agent.board[i][j]==-1:
+                print("ouch")
+                break
             nonzero[(i,j)]=Agent.board[i][j]
             
 
