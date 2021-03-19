@@ -175,7 +175,7 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         
 
-                Agent.display()
+                #Agent.display()
         else: # if the spot we reveal is not zero
             if Agent.board[i][j]==-1:
                 print("ouch")
@@ -183,7 +183,7 @@ def Improved_Agent_GamePlay(Game, Agent):
             nonzero[(i,j)]=Agent.board[i][j]
             
 
-            Agent.display()
+            #Agent.display()
 
 
 
