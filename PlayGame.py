@@ -5,6 +5,7 @@ from matplotlib import cm
 import warnings
 from main import AgentBoard
 from main import MineGrid
+from operator import itemgetter as i
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -63,9 +64,9 @@ def Improved_Agent_GamePlay(Game, Agent):
         for j in range(0, dimension):
             coveredSet.append((i, j))
 
-    visited = []
+    #visited = []
     zero=[]
-    mine_sets=[]
+    #mine_sets=[]
     #sets_list=[]
     nonzero={}
     # Pull off a random element to get started
@@ -82,10 +83,22 @@ def Improved_Agent_GamePlay(Game, Agent):
 
             reveal_safe_zeros(Agent,Game,zero,coveredSet,nonzero)
             Agent.display()
-            nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1])}
+            for key in nonzero:
+                mine=nonzero[key]
+                safe_non_zero_neihgbors=get_revealed_safe_non_zero_neighbors(key[0],key[1],Agent)
+                nonzero[key]=[mine,safe_non_zero_neihgbors]
+            #nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1][0])}
+            #nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1][1])}
+            nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: (item[1][0],-item[1][1]))}
             spots_to_visit=list(nonzero)
             while nonzero:
+                if len(spots_to_visit)<=0:
+                    #nonzero.clear()
+                    break
+
                 spot=spots_to_visit.pop(0)
+                if spot not in nonzero:
+                    continue
                 print(spot)
                 #spot=(4,7)
                 if spot in coveredSet:
@@ -132,13 +145,13 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                     for neighbor in neighbors:
                         if (neighbor[1][0],neighbor[1][1])  in list(nonzero):
-                            nonzero[(neighbor[1][0],neighbor[1][1])]-=1
-                
+                            nonzero[(neighbor[1][0],neighbor[1][1])][0]=nonzero[(neighbor[1][0],neighbor[1][1])][0]-1
+                            #updating
 
                 #if there are no bombs surrounding the spot reveal all of its hidden spots 
                 key_to_remove=[]
                 for key in nonzero.keys():
-                    if nonzero[key]==0:
+                    if nonzero[key][0]==0:
                         key_to_remove.append(key)
                 
 
@@ -161,10 +174,10 @@ def Improved_Agent_GamePlay(Game, Agent):
                             coveredSet.remove((spot[0],spot[1]))
 
                         mines=get_surrounding_mines(spot[0],spot[1],Agent)
+                        safe_neighbors=get_revealed_safe_non_zero_neighbors(spot[0],spot[1],Agent)
+                        nonzero[(spot[0],spot[1])]=[Agent.board[spot[0]][spot[1]]-mines,safe_neighbors]
 
-                        nonzero[(spot[0],spot[1])]=Agent.board[spot[0]][spot[1]]-mines
-
-                        if nonzero[(spot[0],spot[1])]==0:
+                        if nonzero[(spot[0],spot[1])][0]==0:
                             key_to_remove.append((spot[0],spot[1]))
                         nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1])}
                         spots_to_visit=list(nonzero)
@@ -175,15 +188,17 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         
 
-                #Agent.display()
+                Agent.display()
         else: # if the spot we reveal is not zero
             if Agent.board[i][j]==-1:
-                print("ouch")
-                break
+                print("Ouch")
+                #break
+                #coveredSet.remove((i,j))
             nonzero[(i,j)]=Agent.board[i][j]
-            
+            print("non-zero")
+            print((i,j))
 
-            #Agent.display()
+            Agent.display()
 
 
 
@@ -321,6 +336,9 @@ def reveal_safe_zeros(Agent, Game, zero,coveredSet,nonzero):
                 zero.append([i-1,j])
                 coveredSet.remove((i-1,j))
             else:
+                safety=[]
+                safe_non_zero_neihgbors=get_revealed_safe_non_zero_neighbors(i-1,j,Agent,safety)
+                print(safe_non_zero_neihgbors)
                 nonzero[(i-1,j)]=Agent.board[i-1][j]
                 coveredSet.remove((i-1,j))
 
@@ -392,59 +410,6 @@ def reveal_safe_zeros(Agent, Game, zero,coveredSet,nonzero):
 
 
         
-
-
-
-def checkZeros(Agent, Game, dimension, i, j, safe, visited):
-    if Agent.board[i][j] == 0:
-        safe.append((i, j))
-        return clearZeros(Agent, Game, dimension, i, j, safe, visited)
-    return Agent, Game, safe, visited
-
-
-def clearZeros(Agent, Game, dimension, i, j, safe, visited):
-    while len(safe) > 0:
-        ans = safe.pop(0)
-        i = ans[0]
-        j = ans[1]
-        visited.append((i, j))
-
-        # flip 8 surrounding squares, which must be safe
-        if i - 1 >= 0 and (i - 1, j) not in visited:
-            flip(Game, Agent, i - 1, j)
-            if Agent.board[i - 1][j] == 0:
-                safe.append((i - 1, j))
-        if j - 1 >= 0 and (i, j - 1) not in visited:
-            flip(Game, Agent, i, j - 1)
-            if Agent.board[i][j - 1] == 0:
-                safe.append((i, j - 1))
-        if i + 1 < dimension and (i + 1, j) not in visited:
-            flip(Game, Agent, i + 1, j)
-            if Agent.board[i + 1][j] == 0:
-                safe.append((i + 1, j))
-        if j + 1 < Agent.dimension and (i, j + 1) not in visited:
-            flip(Game, Agent, i, j + 1)
-            if Agent.board[i][j + 1] == 0:
-                safe.append((i, j + 1))
-        if i - 1 >= 0 and j - 1 >= 0 and (i - 1, j - 1) not in visited:
-            flip(Game, Agent, i - 1, j - 1)
-            if Agent.board[i - 1][j - 1] == 0:
-                safe.append((i - 1, j - 1))
-        if i - 1 >= 0 and j + 1 <= Agent.dimension - 1 and (i - 1, j + 1) not in visited:
-            flip(Game, Agent, i - 1, j + 1)
-            if Agent.board[i - 1][j + 1] == 0:
-                safe.append((i - 1, j + 1))
-        if i + 1 <= Agent.dimension - 1 and j + 1 <= Agent.dimension - 1 and (i + 1, j + 1) not in visited:
-            flip(Game, Agent, i + 1, j + 1)
-            if Agent.board[i + 1][j + 1] == 0:
-                safe.append((i + 1, j + 1))
-        if i + 1 <= Agent.dimension - 1 and j - 1 >= 0 and (i + 1, j - 1) not in visited:
-            flip(Game, Agent, i + 1, j - 1)
-            if Agent.board[i + 1][j - 1] == 0:
-                safe.append((i + 1, j - 1))
-    return Agent, Game, safe, visited
-
-
 def flip(Game, Agent, x, y):
     Agent.board[x][y] = Game.mineGrid[x][y]
 
@@ -600,59 +565,77 @@ def get_hidden_square(i, j, Agent, hiddenCoordinates=[]):
 if __name__ == '__main__':
 
 
-    answerSheet = MineGrid(10, 0)
-    answerSheet.mineGrid[0][0]=1
-    answerSheet.mineGrid[0][1]= -1   
-    answerSheet.mineGrid[0][2]=1
-    answerSheet.mineGrid[0][6]=1
-    answerSheet.mineGrid[0][7]=-1
-    answerSheet.mineGrid[0][8]=1
-
-    answerSheet.mineGrid[1][0]=2
-    answerSheet.mineGrid[1][1]=2
-    answerSheet.mineGrid[1][2]=3
-    answerSheet.mineGrid[1][3]=1
-    answerSheet.mineGrid[1][4]=1
-    answerSheet.mineGrid[1][6]=1
-    answerSheet.mineGrid[1][7]=1
-    answerSheet.mineGrid[1][8]=1
-
-    answerSheet.mineGrid[2][0]=1
-    answerSheet.mineGrid[2][1]=-1
-    answerSheet.mineGrid[2][2]=2
-    answerSheet.mineGrid[2][3]=-1
-    answerSheet.mineGrid[2][4]=1
-
-    answerSheet.mineGrid[3][0]=1
-    answerSheet.mineGrid[3][1]=1
-    answerSheet.mineGrid[3][2]=2
-    answerSheet.mineGrid[3][3]=1
-    answerSheet.mineGrid[3][4]=1
-
-    answerSheet.mineGrid[5][0]=1
-    answerSheet.mineGrid[5][1]=1
-    answerSheet.mineGrid[5][2]=1
-
-    answerSheet.mineGrid[6][0]=1
-    answerSheet.mineGrid[6][1]=-1
-    answerSheet.mineGrid[6][2]=1
-
-    answerSheet.mineGrid[7][0]=1
-    answerSheet.mineGrid[7][1]=1
-    answerSheet.mineGrid[7][2]=1
-    answerSheet.mineGrid[7][6]=1
-    answerSheet.mineGrid[7][7]=1
-    answerSheet.mineGrid[7][8]=1
-
-    answerSheet.mineGrid[8][6]=1
-    answerSheet.mineGrid[8][7]=-1
-    answerSheet.mineGrid[8][8]=1
-
-    answerSheet.mineGrid[9][6]=1
-    answerSheet.mineGrid[9][7]=1
-    answerSheet.mineGrid[9][8]=1
-
-
+    answerSheet = MineGrid(10, 4)
+    #answerSheet.mineGrid[0][2]=1
+    #answerSheet.mineGrid[0][3]= -1   
+    #answerSheet.mineGrid[0][4]=-1
+    #answerSheet.mineGrid[0][5]=1
+#
+    #answerSheet.mineGrid[1][1]=1
+    #answerSheet.mineGrid[1][2]=3
+    #answerSheet.mineGrid[1][3]=4
+    #answerSheet.mineGrid[1][4]=3
+    #answerSheet.mineGrid[1][5]=1
+    #answerSheet.mineGrid[1][7]=1
+    #answerSheet.mineGrid[1][8]=1
+    #answerSheet.mineGrid[1][9]=1
+#
+    #answerSheet.mineGrid[2][1]=1
+    #answerSheet.mineGrid[2][2]=-1
+    #answerSheet.mineGrid[2][3]=-1
+    #answerSheet.mineGrid[2][4]=2
+    #answerSheet.mineGrid[2][5]=1
+    #answerSheet.mineGrid[2][7]=1
+    #answerSheet.mineGrid[2][8]=-1
+    #answerSheet.mineGrid[2][9]=1
+#
+    #answerSheet.mineGrid[3][1]=1
+    #answerSheet.mineGrid[3][2]=2
+    #answerSheet.mineGrid[3][3]=3
+    #answerSheet.mineGrid[3][4]=-1
+    #answerSheet.mineGrid[3][5]=1
+    #answerSheet.mineGrid[3][7]=1
+    #answerSheet.mineGrid[3][8]=1
+    #answerSheet.mineGrid[3][9]=1
+#
+    #answerSheet.mineGrid[4][3]=2
+    #answerSheet.mineGrid[4][4]=2
+    #answerSheet.mineGrid[4][5]=2
+    #answerSheet.mineGrid[4][7]=1
+    #answerSheet.mineGrid[4][8]=1
+    #answerSheet.mineGrid[4][9]=1
+#
+    #answerSheet.mineGrid[5][3]=1
+    #answerSheet.mineGrid[5][4]=-1
+    #answerSheet.mineGrid[5][5]=1
+    #answerSheet.mineGrid[5][7]=1
+    #answerSheet.mineGrid[5][8]=-1
+    #answerSheet.mineGrid[5][9]=1
+#
+    #answerSheet.mineGrid[6][3]=1
+    #answerSheet.mineGrid[6][4]=1
+    #answerSheet.mineGrid[6][5]=2
+    #answerSheet.mineGrid[6][6]=1
+    #answerSheet.mineGrid[6][7]=2
+    #answerSheet.mineGrid[6][8]=1
+    #answerSheet.mineGrid[6][9]=1
+#
+    #answerSheet.mineGrid[7][5]=2
+    #answerSheet.mineGrid[7][6]=-1
+    #answerSheet.mineGrid[7][7]=2
+#
+    #answerSheet.mineGrid[8][0]=1
+    #answerSheet.mineGrid[8][1]=1
+    #answerSheet.mineGrid[8][5]=2
+    #answerSheet.mineGrid[8][6]=-1
+    #answerSheet.mineGrid[8][7]=2
+#
+    #answerSheet.mineGrid[9][0]=-1
+    #answerSheet.mineGrid[9][1]=1
+    #answerSheet.mineGrid[9][5]=1
+    #answerSheet.mineGrid[9][6]=1
+    #answerSheet.mineGrid[9][7]=1
+#
     answerSheet.display()
     agent = AgentBoard(answerSheet.dimension)
     
