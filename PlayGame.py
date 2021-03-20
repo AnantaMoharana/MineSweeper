@@ -15,34 +15,34 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def Basic_Agent_GamePlay(Game, Agent):
-    coveredSet = []
-    dimension = Game.dimension
+    coveredSet=[]
+    dimension=Game.dimension
 
-    for i in range(0, dimension):
-        for j in range(0, dimension):
-            coveredSet.append((i, j))
+    for i in range(0,dimension):
+        for j in range(0,dimension):
+            coveredSet.append((i,j))
+
+    visited=[]
 
     while coveredSet:
-
-
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
 
+        visited.append([i,j])
 
-       # Check for easy ones not currently part of the clue.
-
-        for x1 in range(0, dimension):
-            for y1 in range(0, dimension):
-                rev_safe = get_revealed_safe_neighbors(x1, y1, Agent)
-                hiddenCords = []
-                hidden = get_hidden_square(x1, y1, Agent, hiddenCords)
-                neighbors = count_surrounding_spaces(x1, y1, Agent)
-                mines = get_surrounding_mines(x1, y1, Agent)
-                clue = Agent.board[x1][y1]
-                if clue - mines == hidden:  # All hidden are mines
-                    markMines(Agent, hiddenCords, coveredSet, [])
-                elif neighbors - clue - rev_safe == hidden:  # All hidden are safe
-                    for coord in hiddenCords:
-                        flip(Game, Agent, coord[0], coord[1], coveredSet)
+        for cord in visited:
+            x=cord[0]
+            y=cord[1]
+            rev_safe = get_revealed_safe_neighbors(x, y, Agent)
+            hiddenCords = []
+            hidden = get_hidden_square(x, y, Agent, hiddenCords)
+            neighbors = count_surrounding_spaces(x, y, Agent)
+            mines = get_surrounding_mines(x, y, Agent)
+            clue = Agent.board[x][y]
+            if clue - mines == hidden:  # All hidden are mines
+                markMines(Agent, hiddenCords, coveredSet,visited)
+            elif neighbors-clue-rev_safe == hidden:  # All hidden are safe
+                for coord in hiddenCords:
+                    flip(Game, Agent, coord[0], coord[1], coveredSet)
 
 
 
@@ -64,10 +64,9 @@ def Improved_Agent_GamePlay(Game, Agent):
 
 
     # Pull off a random element to get started
-    while coveredSet:
-
+    while coveredSet or not done(Agent):
         # 1. Random Selection
-
+        # Agent.display()
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
 
         # Safe square, so = 0. Just remove
@@ -94,7 +93,24 @@ def Improved_Agent_GamePlay(Game, Agent):
 
         # Add to knowledge base, hidden neighbors = clue - mines
         base.append((getHidden, getClue - getMines))
-        # TODO: TAKE INTERSECTION HERE, AND SEE WHAT WE CAN DEDUCE
+        # Knowledge Base work
+        for k in base:
+            isSubset, newList, newClue = intersectional(k, (getHidden, getClue - getMines))
+            if isSubset:
+
+                if newClue == 0:  # All safe
+                    for y in newList:
+                        flip(Game, Agent, y[0], y[1], coveredSet)
+                        for element in base:
+                            if (y[0], y[1]) in element[0]:
+                                element[0].remove((y[0], y[1]))
+                elif len(newList) == newClue:  # All mines
+                    markMines(Agent, newList, coveredSet, visited=[])
+                    for y in newList:
+                        for element in base:
+                            if (y[0], y[1]) in element[0]:
+                                element[0].remove((y[0], y[1]))
+                                element[1] = element[1] - 1
 
 
         # 2 . Basic Agent (Add to Knowledge Base)
@@ -137,10 +153,26 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         # Add to knowledge base, hidden neighbors = clue - mines
                         base.append((getHidden, getClue-getMines))
-                        # TODO: TAKE INTERSECTION HERE, AND SEE WHAT WE CAN DEDUCE
 
+                        # Knowledge Base work
+                        for k in base:
+                            isSubset, newList, newClue = intersectional(k, (getHidden, getClue-getMines))
 
+                            if isSubset:
 
+                                if newClue == 0: # All safe
+                                    for y in newList:
+                                        flip(Game, Agent, y[0], y[1], coveredSet)
+                                        for element in base:
+                                            if (y[0], y[1]) in element[0]:
+                                                element[0].remove((y[0], y[1]))
+                                elif len(newList) == newClue: # All mines
+                                    markMines(Agent, newList, coveredSet, visited=[])
+                                    for y in newList:
+                                        for element in base:
+                                            if (y[0], y[1]) in element[0]:
+                                                element[0].remove((y[0], y[1]))
+                                                element[1] = element[1] - 1
 
         # 3. Advanced Agent (Add to Knowledge Base)
 
@@ -153,13 +185,55 @@ def Improved_Agent_GamePlay(Game, Agent):
                 markMines(Agent, element[0], coveredSet, visited=[])
                 base.remove(element)
 
-            # TODO: COMPARE INTERSECTION HERE, AND SEE WHAT WE CAN DEDUCE
+            # Knowledge Base work
+            for k in base:
+                isSubset, newList, newClue = intersectional(k, (getHidden, getClue - getMines))
+                if isSubset:
+
+                    if newClue == 0:  # All safe
+                        for y in newList:
+                            flip(Game, Agent, y[0], y[1], coveredSet)
+                            for element in base:
+                                if (y[0], y[1]) in element[0]:
+                                    element[0].remove((y[0], y[1]))
+                    elif len(newList) == newClue:  # All mines
+                        markMines(Agent, newList, coveredSet, visited=[])
+                        for y in newList:
+                            for element in base:
+                                if (y[0], y[1]) in element[0]:
+                                    element[0].remove((y[0], y[1]))
+                                    element[1] = element[1] - 1
+
+
+def done(Agent):
+    for x in range(0, Agent.dimension):
+        for y in range(0, Agent.dimension):
+            if Agent.board[x][y] == -2:
+                return False
+    return True
+
+
+def intersectional(element1, element2):
+    clue1 = element1[1]
+    clue2 = element2[1]
+    difference = []
+
+    for item in element2[0]:
+        if item not in element1[0]:
+            difference.append(item)
 
 
 
+    # Check if element1 is a subset of element2
+    isSubset = True
+    for item in element1[0]:
+        try:
+            element2[0].index(item)
+        except ValueError:
+            isSubset = False
+            break
 
-
-
+    return isSubset, difference, (clue2 - clue1)
 
 
 def get_hidden_neighboring_spots(i, j, neighbor_list, Agent):
@@ -529,10 +603,13 @@ def get_hidden_square(i, j, Agent, hiddenCoordinates=[]):
 
 
 if __name__ == '__main__':
+
+
+
     # Graph parameters
-    density = [.1, .2, .3, .4, .5, .6, .7, .8]
+    density = [.1, .2, .3, .4, .5]
     runsPerD = 10
-    dim = 12
+    dim = 15
     successRateBasic = [0] * len(density)
     successRateAdvanced = [0] * len(density)
     for i in range(len(density)):
