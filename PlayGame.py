@@ -179,16 +179,17 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         if nonzero[(spot[0],spot[1])][0]==0:
                             key_to_remove.append((spot[0],spot[1]))
-                        nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: item[1])}
+
+                        nonzero={k: v for k, v in sorted(nonzero.items(), key=lambda item: (item[1][0],-item[1][1]))}
                         spots_to_visit=list(nonzero)
-                        
 
                     #spots_to_visit.remove(remove)
                     nonzero.pop(remove)
+                
 
                         
 
-                Agent.display()
+                #Agent.display()
         else: # if the spot we reveal is not zero
             if Agent.board[i][j]==-1:
                 print("Ouch")
@@ -198,7 +199,7 @@ def Improved_Agent_GamePlay(Game, Agent):
             print("non-zero")
             print((i,j))
 
-            Agent.display()
+            #Agent.display()
 
 
 
@@ -565,7 +566,7 @@ def get_hidden_square(i, j, Agent, hiddenCoordinates=[]):
 if __name__ == '__main__':
 
 
-    answerSheet = MineGrid(10, 4)
+    answerSheet = MineGrid(12, 14)
     #answerSheet.mineGrid[0][2]=1
     #answerSheet.mineGrid[0][3]= -1   
     #answerSheet.mineGrid[0][4]=-1
@@ -636,16 +637,17 @@ if __name__ == '__main__':
     #answerSheet.mineGrid[9][6]=1
     #answerSheet.mineGrid[9][7]=1
 #
-    answerSheet.display()
+    #answerSheet.display()
     agent = AgentBoard(answerSheet.dimension)
     
     #agent.board[0][0]=1
     #agent.board[2][2]=3
-    Improved_Agent_GamePlay(answerSheet, agent)
+    #Improved_Agent_GamePlay(answerSheet, agent)
+    Basic_Agent_GamePlay(answerSheet,agent)
 
 
-    answerSheet.display()
-    agent.display()
+    #answerSheet.display()
+    #agent.display()
     print("Done\n")
     answer = 0
     found = 0
