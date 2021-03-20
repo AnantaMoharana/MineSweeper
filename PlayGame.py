@@ -661,3 +661,80 @@ if __name__ == '__main__':
     print(found)
     print(answer)
     print((found / answer))
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    '''
+    
+    
+    
+    if __name__ == '__main__':
+
+
+
+    # Graph parameters
+
+    density = [.1, .2, .3, .4, .5, .6, .7, .8]
+
+    runsPerD = 10
+    dim = 12
+
+    successRateBasic = [0] * len(density)
+    successRateAdvanced = [0] * len(density)
+
+
+
+    for i in range(len(density)):
+        for j in range(runsPerD):
+            print("density ", density[i], " run # ", j)
+            answerSheet = MineGrid(dim, int(dim*dim*density[i]))
+            agent = AgentBoard(dim)
+            Basic_Agent_GamePlay(answerSheet, agent)
+
+            answer = 0
+            found = 0
+            for x in range(agent.dimension):
+                for y in range(agent.dimension):
+                    if agent.board[x][y] == -3 and answerSheet.mineGrid[x][y] == - 1:
+                        found = found + 1
+                    if answerSheet.mineGrid[x][y] == -1:
+                        answer = answer + 1
+            successRateBasic[i] = successRateBasic[i] + (found / answer)
+
+            agent = AgentBoard(dim)
+            Improved_Agent_GamePlay(answerSheet, agent)
+            answer = 0
+            found = 0
+            for x in range(agent.dimension):
+                for y in range(agent.dimension):
+                    if agent.board[x][y] == -3 and answerSheet.mineGrid[x][y] == - 1:
+                        found = found + 1
+                    if answerSheet.mineGrid[x][y] == -1:
+                        answer = answer + 1
+            successRateAdvanced[i] = successRateAdvanced[i] + (found / answer)
+
+
+        successRateBasic[i] = 100 * successRateBasic[i]/runsPerD
+        successRateAdvanced[i] = 100 * successRateAdvanced[i] / runsPerD
+
+
+
+
+    plt.plot(density, successRateBasic)
+    plt.plot(density, successRateAdvanced)
+    plt.legend(['Basic Agent', 'M.I.S.S.L.E'])
+    plt.title("Basic vs Advanced Agents")
+    plt.ylabel('percentage of mines correctly flagged and defused')
+    plt.xlabel('Mine Density')
+    plt.show()
+'''
