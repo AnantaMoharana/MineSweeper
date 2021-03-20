@@ -14,36 +14,34 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def Basic_Agent_GamePlay(Game, Agent):
-    print("Running Basic")
-    coveredSet=[]
-    dimension=Game.dimension
+    coveredSet = []
+    dimension = Game.dimension
 
-    for i in range(0,dimension):
-        for j in range(0,dimension):
-            coveredSet.append((i,j))
-
-    visited=[]
+    for i in range(0, dimension):
+        for j in range(0, dimension):
+            coveredSet.append((i, j))
 
     while coveredSet:
+
+
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
 
-        visited.append([i,j])
 
-        for cord in visited:
-            x=cord[0]
-            y=cord[1]
-            rev_safe = get_revealed_safe_neighbors(x, y, Agent)
-            hiddenCords = []
-            hidden = get_hidden_square(x, y, Agent, hiddenCords)
-            neighbors = count_surrounding_spaces(x, y, Agent)
-            mines = get_surrounding_mines(x, y, Agent)
-            clue = Agent.board[x][y]
-            if clue - mines == hidden:  # All hidden are mines
-                markMines(Agent, hiddenCords, coveredSet,visited)
-            elif neighbors-clue-rev_safe == hidden:  # All hidden are safe
-                for coord in hiddenCords:
-                    flip(Game, Agent, coord[0], coord[1])
+       # Check for easy ones not currently part of the clue.
 
+        for x1 in range(0, dimension):
+            for y1 in range(0, dimension):
+                rev_safe = get_revealed_safe_neighbors(x1, y1, Agent)
+                hiddenCords = []
+                hidden = get_hidden_square(x1, y1, Agent, hiddenCords)
+                neighbors = count_surrounding_spaces(x1, y1, Agent)
+                mines = get_surrounding_mines(x1, y1, Agent)
+                clue = Agent.board[x1][y1]
+                if clue - mines == hidden:  # All hidden are mines
+                    markMines(Agent, hiddenCords, coveredSet, [])
+                elif neighbors - clue - rev_safe == hidden:  # All hidden are safe
+                    for coord in hiddenCords:
+                        flip(Game, Agent, coord[0], coord[1], coveredSet)
 
 
 
