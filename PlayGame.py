@@ -1,11 +1,8 @@
 import random
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
 import warnings
 from main import AgentBoard
 from main import MineGrid
-from operator import itemgetter as i
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -14,9 +11,14 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # AGENT BOARD: -3 = FLAGGED MINE, -2 = COVERED, -1 = BLOWN UP MINE, 0-9 = CLUE
 
 
+
 def Basic_Agent_GamePlay(Game, Agent):
+   # Just follow the basic algorithmic implementation
+
     coveredSet=[]
     dimension=Game.dimension
+
+    # Make a list of all 'covered' (unvisited) squares
 
     for i in range(0,dimension):
         for j in range(0,dimension):
@@ -24,31 +26,36 @@ def Basic_Agent_GamePlay(Game, Agent):
 
     visited=[]
 
+    # While we still have squares to visit
     while coveredSet:
+        # Flip a random square to start us off
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
 
         visited.append([i,j])
 
+        # Loop over every one we have seen thus far to see if we can find something
         for cord in visited:
             x=cord[0]
             y=cord[1]
+
+            # Use the helper functions to find relevant clues and information
+
             rev_safe = get_revealed_safe_neighbors(x, y, Agent)
+
             hiddenCords = []
             hidden = get_hidden_square(x, y, Agent, hiddenCords)
+
             neighbors = count_surrounding_spaces(x, y, Agent)
+
             mines = get_surrounding_mines(x, y, Agent)
             clue = Agent.board[x][y]
-            if clue - mines == hidden:  # All hidden are mines
+
+            if clue - mines == hidden:  # All hidden are mines, mark them on the Agent board as such
                 markMines(Agent, hiddenCords, coveredSet,visited)
-            elif neighbors-clue-rev_safe == hidden:  # All hidden are safe
+
+            elif neighbors-clue-rev_safe == hidden:  # All hidden are safe, mark them on Agent board as such
                 for coord in hiddenCords:
                     flip(Game, Agent, coord[0], coord[1], coveredSet)
-
-
-
-
-
-
 
 
 def Improved_Agent_GamePlay(Game, Agent):
@@ -60,27 +67,27 @@ def Improved_Agent_GamePlay(Game, Agent):
         for j in range(0, dimension):
             coveredSet.append((i, j))
 
-    base = [] #  elements in form of ([Neighbors], Clue) where Neighbor = (x, y) and Clue = int
-
+    #  elements in knowledge base are in form of ([Neighbors], Clue) where neighbor = (pos x, pos y) and Clue = int
+    base = []
 
     # Pull off a random element to get started
     while coveredSet or not done(Agent):
+
         # 1. Random Selection
-        # Agent.display()
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
 
-        # Safe square, so = 0. Just remove
+        # Safe square, so variable must be = 0. Just remove var from equations, no need to subtract
         if Agent.board[i][j] >= 0:
             for element in base:
                 if (i, j) in element[0]:
                     element[0].remove((i, j))
-        elif Agent.board[i][j] == -1:
+
+        # Mine square, so variable must be = 1. Remove var from all equations and subtract 1 from their clue
+        elif Agent.board[i][j] == -1 or Agent.board[i][j] == -3:
             for element in base:
                 if (i, j) in element[0]:
                     element[0].remove((i, j))
                     element[1] = element[1] - 1
-
-
 
 
         # Get hidden coordinates
@@ -93,18 +100,21 @@ def Improved_Agent_GamePlay(Game, Agent):
 
         # Add to knowledge base, hidden neighbors = clue - mines
         base.append((getHidden, getClue - getMines))
+
         # Knowledge Base work
-        for k in base:
-            isSubset, newList, newClue = intersectional(k, (getHidden, getClue - getMines))
+        for item in base:
+            isSubset, newList, newClue = difference(item, (getHidden, getClue - getMines))
+
             if isSubset:
 
-                if newClue == 0:  # All safe
+                if newClue == 0:  # All safe, add to base and flip
                     for y in newList:
                         flip(Game, Agent, y[0], y[1], coveredSet)
                         for element in base:
                             if (y[0], y[1]) in element[0]:
                                 element[0].remove((y[0], y[1]))
-                elif len(newList) == newClue:  # All mines
+
+                elif len(newList) == newClue:  # All mines, add to base and mark
                     markMines(Agent, newList, coveredSet, visited=[])
                     for y in newList:
                         for element in base:
@@ -113,8 +123,7 @@ def Improved_Agent_GamePlay(Game, Agent):
                                 element[1] = element[1] - 1
 
 
-        # 2 . Basic Agent (Add to Knowledge Base)
-
+        # 2 . Basic Agent as a base for the algorithm. (Add to Knowledge Base)
         for x1 in range(0, dimension):
             for y1 in range(0, dimension):
                 rev_safe = get_revealed_safe_neighbors(x1, y1, Agent)
@@ -131,7 +140,7 @@ def Improved_Agent_GamePlay(Game, Agent):
                     for coordinates in hiddenCords:
                         for element in base:
                             if (coordinates[0], coordinates[1]) in element[0]:
-                                element[0].remove((x, y))
+                                element[0].remove((x1, y1))
                                 element[1] = element[1] - 1
 
                 elif neighbors - clue - rev_safe == hidden:  # All hidden are safe
@@ -139,7 +148,7 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         for element in base:
                             if (coordinates[0], coordinates[1]) in element[0]:
-                                element[0].remove((x, y))
+                                element[0].remove((x1, y1))
 
                         flip(Game, Agent, coordinates[0], coordinates[1], coveredSet)
 
@@ -156,7 +165,7 @@ def Improved_Agent_GamePlay(Game, Agent):
 
                         # Knowledge Base work
                         for k in base:
-                            isSubset, newList, newClue = intersectional(k, (getHidden, getClue-getMines))
+                            isSubset, newList, newClue = difference(k, (getHidden, getClue-getMines))
 
                             if isSubset:
 
@@ -187,22 +196,23 @@ def Improved_Agent_GamePlay(Game, Agent):
 
             # Knowledge Base work
             for k in base:
-                isSubset, newList, newClue = intersectional(k, (getHidden, getClue - getMines))
+                isSubset, newList, newClue = difference(k, (getHidden, getClue - getMines))
                 if isSubset:
 
-                    if newClue == 0:  # All safe
+                    if newClue == 0:  # All safe, mark as such
                         for y in newList:
                             flip(Game, Agent, y[0], y[1], coveredSet)
-                            for element in base:
-                                if (y[0], y[1]) in element[0]:
-                                    element[0].remove((y[0], y[1]))
-                    elif len(newList) == newClue:  # All mines
+                            for elements in base:
+                                if (y[0], y[1]) in elements[0]:
+                                    elements[0].remove((y[0], y[1]))
+
+                    elif len(newList) == newClue:  # All mines, mark as such
                         markMines(Agent, newList, coveredSet, visited=[])
                         for y in newList:
-                            for element in base:
-                                if (y[0], y[1]) in element[0]:
-                                    element[0].remove((y[0], y[1]))
-                                    element[1] = element[1] - 1
+                            for elements in base:
+                                if (y[0], y[1]) in elements[0]:
+                                    elements[0].remove((y[0], y[1]))
+                                    elements[1] = elements[1] - 1
 
 
 def done(Agent):
@@ -213,7 +223,7 @@ def done(Agent):
     return True
 
 
-def intersectional(element1, element2):
+def difference(element1, element2):
     clue1 = element1[1]
     clue2 = element2[1]
     difference = []
@@ -316,17 +326,6 @@ def revealed(Game, Agent, spots, coveredSet):
         if (x, y) in coveredSet:
             coveredSet.remove((x, y))
 
-
-# intersection method from geeks for geeks
-def intersection(sets):
-    while len(sets) > 1:
-        lst1 = sets.pop()
-        lst2 = sets.pop()
-        lst3 = [value for value in lst1 if value in lst2]
-        sets.append(lst3)
-
-
-# Helper methods
 def get_neighboring_spots(i, j, neighbor_list, Agent):
     if i - 1 >= 0:
         neighbor_list.append([i - 1, j])
@@ -475,6 +474,48 @@ def pickRandomSquare(Game, Agent, coveredSet):
     return x, y, coveredSet
 
 
+def pickRandomBONUS(Game, Agent, coveredSet):
+    # Find the lowest single probability
+    bonus = [[Game.numberOfMines / (Agent.dimension  * Agent.dimension)]*Agent.dimension]*Agent.dimension
+
+
+    for x in range(0, Agent.dimension):
+        for y in range(0, Agent.dimension):
+            if Agent.board[x][y] > 0:
+                bonus[x][y] = 5
+                neighborList = []
+                get_neighboring_spots(x, y, neighborList, Agent)
+                num_neighbors = len(neighborList)
+
+
+                mines = get_surrounding_mines(x, y, Agent)
+
+                neighborList = []
+                get_hidden_neighboring_spots(x, y, neighborList, Agent)
+
+
+                for item in neighborList:
+                    if Agent.board[item[0]][item[1]] == -2:
+                        bonus[item[0]][item[1]] = Agent.board[item[0]][item[1]] / (num_neighbors - mines)
+
+
+    mini = 5
+    min_pos = (0, 0)
+    for x in range(0, Agent.dimension):
+        for y in range(0, Agent.dimension):
+            if bonus[x][y] < mini:
+                mini = bonus[x][y]
+                min_pos = (x, y)
+
+
+    if min_pos in coveredSet:
+        coveredSet.remove(min_pos)
+    flip(Game, Agent, min_pos[0], min_pos[1], coveredSet)
+
+    return min_pos[0], min_pos[1], coveredSet
+
+
+
 def get_revealed_safe_neighbors(i, j, Agent, set_spots=[]):
     safely_revealed = 0
     if i - 1 >= 0:
@@ -609,14 +650,13 @@ if __name__ == '__main__':
     # Graph parameters
     density = [.1, .2, .3, .4, .5]
     runsPerD = 10
-    dim = 15
+    dim = 10
     successRateBasic = [0] * len(density)
     successRateAdvanced = [0] * len(density)
     for i in range(len(density)):
         for j in range(runsPerD):
             print("density ", density[i], " run # ", j)
             answerSheet = MineGrid(dim, int(dim*dim*density[i]))
-            #answerSheet.display()
             agent = AgentBoard(dim)
             Basic_Agent_GamePlay(answerSheet, agent)
             answer = 0
