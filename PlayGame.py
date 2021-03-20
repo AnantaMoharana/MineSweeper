@@ -413,6 +413,14 @@ def reveal_safe_zeros(Agent, Game, zero,coveredSet,nonzero):
         
 def flip(Game, Agent, x, y):
     Agent.board[x][y] = Game.mineGrid[x][y]
+    
+    if Agent.board[x][y] == 0:
+        hidden = []
+        get_hidden_neighboring_spots(x, y, hidden, Agent)
+        
+        for cords in hidden:
+            flip(Game, Agent, cords[0], cords[1])
+    
 
 
 def markMines(Agent, hidden, coveredSet=[],visited=[]):
