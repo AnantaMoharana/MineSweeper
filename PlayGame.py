@@ -75,6 +75,9 @@ def Improved_Agent_GamePlay(Game, Agent):
 
         # 1. Random Selection
         i, j, coveredSet = pickRandomSquare(Game, Agent, coveredSet)
+         
+        if i == j == 0 and not coveredSet:
+            return
 
         # Safe square, so variable must be = 0. Just remove var from equations, no need to subtract
         if Agent.board[i][j] >= 0:
@@ -475,45 +478,68 @@ def pickRandomSquare(Game, Agent, coveredSet):
 
 
 def pickRandomBONUS(Game, Agent, coveredSet):
-    # Find the lowest single probability
-    bonus = [[Game.numberOfMines / (Agent.dimension  * Agent.dimension)]*Agent.dimension]*Agent.dimension
+
+    # Get random probability that ANY hidden box is a mine
+    if getNumHidden(Agent) == 0:
+        return 0, 0, []
+
+    prob = Game.numberOfMines / getNumHidden(Agent)
 
 
-    for x in range(0, Agent.dimension):
-        for y in range(0, Agent.dimension):
-            if Agent.board[x][y] > 0:
-                bonus[x][y] = 5
+    bonus = [[prob] * Agent.dimension for _ in range(Agent.dimension)]
+
+    for i in range(0, Agent.dimension):
+        for j in range(0, Agent.dimension):
+            if Agent.board[i][j] == -3 or Agent.board[i][j] == -1:
+                bonus[i][j] = 1.02
+            elif Agent.board[i][j] >= 0:
+                bonus[i][j] = 1.01
+
                 neighborList = []
-                get_neighboring_spots(x, y, neighborList, Agent)
+                get_neighboring_spots(i, j, neighborList, Agent)
                 num_neighbors = len(neighborList)
 
 
-                mines = get_surrounding_mines(x, y, Agent)
+                num_mines = get_surrounding_mines(i, j, Agent)
 
                 neighborList = []
-                get_hidden_neighboring_spots(x, y, neighborList, Agent)
+                get_hidden_neighboring_spots(i, j, neighborList, Agent)
 
+                clue = Agent.board[i][j]
 
                 for item in neighborList:
                     if Agent.board[item[0]][item[1]] == -2:
-                        bonus[item[0]][item[1]] = Agent.board[item[0]][item[1]] / (num_neighbors - mines)
+                        prev = bonus[item[0]][item[1]]
+
+                        curr = (clue - num_mines) / num_neighbors
+
+                        if prev > curr:
+                            bonus[item[0]][item[1]] = curr
+
+    getMin = np.array(bonus)
+    minElement = getMin.min()
+
+    indexes = []
 
 
-    mini = 5
-    min_pos = (0, 0)
-    for x in range(0, Agent.dimension):
-        for y in range(0, Agent.dimension):
-            if bonus[x][y] < mini:
-                mini = bonus[x][y]
-                min_pos = (x, y)
+    if minElement > 1.00:
+        return 0, 0, []
+
+    for i in range(0, Agent.dimension):
+        for j in range(0, Agent.dimension):
+            if bonus[i][j] == minElement:
+                indexes.append((i, j))
 
 
-    if min_pos in coveredSet:
-        coveredSet.remove(min_pos)
-    flip(Game, Agent, min_pos[0], min_pos[1], coveredSet)
+    xfirst = random.choices(indexes)
+    xfirst = xfirst[0]
 
-    return min_pos[0], min_pos[1], coveredSet
+    x = xfirst[0]
+    y = xfirst[1]
 
+    flip(Game, Agent, x, y, coveredSet)
+
+    return x, y, coveredSet
 
 
 def get_revealed_safe_neighbors(i, j, Agent, set_spots=[]):
