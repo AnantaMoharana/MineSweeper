@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import warnings
 from main import AgentBoard
 from main import MineGrid
+import numpy as np
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -475,6 +476,16 @@ def pickRandomSquare(Game, Agent, coveredSet):
     flip(Game, Agent, x, y, coveredSet)
 
     return x, y, coveredSet
+
+
+def getNumHidden(Agent):
+    count = 0
+    for x in range(0, Agent.dimension):
+        for y in range(0, Agent.dimension):
+            if Agent.board[x][y] == -2:
+                count = count + 1
+    return count
+
 
 
 def pickRandomBONUS(Game, Agent, coveredSet):
